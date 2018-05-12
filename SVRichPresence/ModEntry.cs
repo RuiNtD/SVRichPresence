@@ -8,7 +8,7 @@ using StardewValley;
 namespace SVRichPresence {
 	public class ModEntry : Mod {
 		public override void Entry(IModHelper helper) {
-			GameEvents.HalfSecondTick += this.DoUpdate;
+			GameEvents.UpdateTick += this.DoUpdate;
 			DiscordRpc.EventHandlers handlers = new DiscordRpc.EventHandlers {
 				readyCallback = HandleDiscordReady,
 				errorCallback = HandleDiscordError,
