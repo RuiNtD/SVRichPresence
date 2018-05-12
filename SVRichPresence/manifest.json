@@ -7,6 +7,7 @@
 	"EntryDll": "SVRichPresence.dll",
 	"MinimumApiVersion": "2.0",
 	"UpdateKeys": [
-		"Nexus:2156"
+		"Nexus:2156",
+		"GitHub:FayneAldan/SVRichPresence"
 	]
 }
