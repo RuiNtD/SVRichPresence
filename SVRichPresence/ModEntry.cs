@@ -9,27 +9,8 @@ namespace SVRichPresence {
 	public class ModEntry : Mod {
 		public override void Entry(IModHelper helper) {
 			GameEvents.UpdateTick += this.DoUpdate;
-			DiscordRpc.EventHandlers handlers = new DiscordRpc.EventHandlers {
-				readyCallback = HandleDiscordReady,
-				errorCallback = HandleDiscordError,
-				disconnectedCallback = HandleDiscordDisconnected
-			};
+			DiscordRpc.EventHandlers handlers = new DiscordRpc.EventHandlers();
 			DiscordRpc.Initialize("444517509148966923", ref handlers, false, "413150");
-		}
-
-		private void HandleDiscordReady(ref DiscordRpc.DiscordUser user) {
-			Monitor.Log("Discord Rich Presence Ready");
-			Monitor.Log("Logged in as " + user.username + "#" + user.discriminator + " (" + user.userId + ")");
-		}
-
-		private void HandleDiscordDisconnected(int errorCode, string message) {
-			Monitor.Log("Discord RP Disconnected (" + errorCode + ")");
-			Monitor.Log(message);
-		}
-
-		private void HandleDiscordError(int errorCode, string message) {
-			Monitor.Log("Discord RP Error (" + errorCode + ")");
-			Monitor.Log(message);
 		}
 
 		private void DoUpdate(object sender, EventArgs e) {
