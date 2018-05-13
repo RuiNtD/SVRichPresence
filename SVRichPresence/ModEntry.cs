@@ -62,28 +62,36 @@ namespace SVRichPresence {
 		private string WeatherName() {
 			if (Game1.isRaining) {
 				if (Game1.isLightning)
-					return "Storm";
+					return "Stormy";
 				else
-					return "Rain";
+					return "Rainy";
 			}
 			if (Game1.isDebrisWeather)
-				return "Wind";
+				return "Windy";
 			if (Game1.isSnowing)
-				return "Snow";
+				return "Snowy";
 			if (Game1.weddingToday)
 				return "Wedding Day";
 			if (Game1.isFestival())
 				return "Festival";
-			return "Sun";
+			return "Sunny";
 		}
 
 		private string WeatherKey() {
-			if (Game1.isRaining)
-				return "rainy";
+			if (Game1.isRaining) {
+				if (Game1.isLightning)
+					return "stormy";
+				else
+					return "rainy";
+			}
 			if (Game1.isDebrisWeather)
 				return "windy_" + Game1.currentSeason;
 			if (Game1.isSnowing)
 				return "snowy";
+			if (Game1.weddingToday)
+				return "wedding";
+			if (Game1.isFestival())
+				return "festival";
 			return "sunny";
 		}
 
