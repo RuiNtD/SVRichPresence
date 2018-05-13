@@ -30,7 +30,7 @@ namespace SVRichPresence {
 				}
 				presence.smallImageKey = "weather_" + WeatherKey();
 				presence.smallImageText = WeatherName() + " (" + Game1.getTimeOfDayString(Game1.timeOfDay) + ")";
-				presence.largeImageKey = SeasonKey() + "_" + FarmTypeKey();
+				presence.largeImageKey = Game1.currentSeason + "_" + FarmTypeKey();
 				var date = SDate.Now();
 				var season = date.Season.Substring(0, 1).ToUpper() + date.Season.Substring(1);
 				presence.largeImageText = "Day " + date.Day + " of " + season + ", Year " + date.Year;
@@ -93,21 +93,6 @@ namespace SVRichPresence {
 			if (Game1.isFestival())
 				return "festival";
 			return "sunny";
-		}
-
-		private string SeasonKey() {
-			switch (Game1.currentSeason) {
-				case "spring":
-					return "spring";
-				case "summer":
-					return "summer";
-				case "fall":
-					return "fall";
-				case "winter":
-					return "winter";
-				default:
-					return "spring";
-			}
 		}
 	}
 }
