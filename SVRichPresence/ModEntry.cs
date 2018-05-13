@@ -43,7 +43,6 @@ namespace SVRichPresence {
 		}
 
 		private string FarmTypeKey() {
-			return "default";
 			switch (Game1.whichFarm) {
 				case Farm.default_layout:
 					return "standard";
