@@ -13,6 +13,10 @@ namespace SVRichPresence {
 			DiscordRpc.Initialize("444517509148966923", ref handlers, false, "413150");
 		}
 
+		protected override void Dispose(bool disposing) {
+			DiscordRpc.Shutdown();
+		}
+
 		private void DoUpdate(object sender, EventArgs e) {
 			DiscordRpc.RichPresence presence = new DiscordRpc.RichPresence();
 			if (Context.IsWorldReady) {
