@@ -38,9 +38,7 @@ namespace SVRichPresence {
 				presence.smallImageKey = "weather_" + WeatherKey();
 				presence.smallImageText = WeatherName() + " (" + Game1.getTimeOfDayString(Game1.timeOfDay) + ")";
 				presence.largeImageKey = Game1.currentSeason + "_" + FarmTypeKey();
-				var date = SDate.Now();
-				var season = date.Season.Substring(0, 1).ToUpper() + date.Season.Substring(1);
-				presence.largeImageText = "Day " + date.Day + " of " + season + ", Year " + date.Year;
+				presence.largeImageText = Date();
 			} else {
 				presence.state = "On the Title Screen";
 				presence.smallImageKey = "default_small";
@@ -55,6 +53,12 @@ namespace SVRichPresence {
 				if (farmer.userID.Value != "")
 					ret++;
 			return ret;
+		}
+
+		private string Date() {
+			SDate date = SDate.Now();
+			string season = date.Season.Substring(0, 1).ToUpper() + date.Season.Substring(1);
+			return "Day " + date.Day + " of " + season + ", Year " + date.Year;
 		}
 
 		private string FarmTypeKey() {
