@@ -18,7 +18,9 @@ namespace SVRichPresence {
 		}
 
 		private void DoUpdate(object sender, EventArgs e) {
+			string gamePresence = Helper.Reflection.GetField<string>(typeof(Game1), "debugPresenceString").GetValue();
 			DiscordRpc.RichPresence presence = new DiscordRpc.RichPresence();
+			presence.largeImageText = gamePresence;
 			if (Context.IsWorldReady) {
 				if (!Context.IsMultiplayer)
 					presence.state = "Playing Solo";
@@ -36,11 +38,10 @@ namespace SVRichPresence {
 					presence.partyId = Constants.SaveFolderName;
 				}
 				presence.smallImageKey = "weather_" + WeatherKey();
-				presence.smallImageText = WeatherName() + " (" + Game1.getTimeOfDayString(Game1.timeOfDay) + ")";
 				presence.largeImageKey = Game1.currentSeason + "_" + FarmTypeKey();
-				presence.largeImageText = Date();
+				presence.smallImageText = Date();
 			} else {
-				presence.state = "On the Title Screen";
+				presence.state = "In Menus";
 				presence.smallImageKey = "default_small";
 				presence.largeImageKey = "default_large";
 			}
