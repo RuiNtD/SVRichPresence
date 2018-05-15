@@ -29,7 +29,10 @@ namespace SVRichPresence {
 				presence.details = Game1.player.farmName.ToString() + " Farm (" + Game1.player.Money + "G)";
 				if (Context.IsMultiplayer) {
 					presence.partySize = Game1.numberOfPlayers();
-					presence.partyMax = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1;
+					int maxPlayers = Game1.getFarm().getNumberBuildingsConstructed("Cabin");
+					maxPlayers -= FarmHandCount(); // Only account for empty cabins
+					maxPlayers += Game1.numberOfPlayers(); // Add the online players
+					presence.partyMax = maxPlayers;
 					presence.partyId = Constants.SaveFolderName;
 				}
 				presence.smallImageKey = "weather_" + WeatherKey();
@@ -44,6 +47,14 @@ namespace SVRichPresence {
 				presence.largeImageKey = "default_large";
 			}
 			DiscordRpc.UpdatePresence(presence);
+		}
+
+		private int FarmHandCount() {
+			int ret = 0;
+			foreach (Farmer farmer in Game1.getAllFarmhands())
+				if (farmer.userID.Value != "")
+					ret++;
+			return ret;
 		}
 
 		private string FarmTypeKey() {
