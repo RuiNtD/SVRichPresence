@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("SVRichPresence")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Stardew Valley Discord Rich Presence")]
+[assembly: AssemblyDescription("Shows your in-game state on your Discord profile.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("SVRichPresence")]
-[assembly: AssemblyCopyright("Copyright ©  2018")]
+[assembly: AssemblyProduct("Stardew Valley Discord Rich Presence")]
+[assembly: AssemblyCopyright("Copyright © Fayne Aldan 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
