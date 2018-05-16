@@ -12,12 +12,24 @@ namespace SVRichPresence {
 
 		public override void Entry(IModHelper helper) {
 			GameEvents.UpdateTick += DoUpdate;
+			SaveEvents.AfterLoad += SetTimestamp;
+			SaveEvents.AfterReturnToTitle += ResetTimestamp;
 			EventHandlers handlers = new EventHandlers();
 			DiscordRpc.Initialize(clientId, ref handlers, false, "413150");
 		}
 
+		private long timestamp = 0;
+
 		protected override void Dispose(bool disposing) {
 			DiscordRpc.Shutdown();
+		}
+
+		private void SetTimestamp(object sender, EventArgs e) {
+			timestamp = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).Ticks / TimeSpan.TicksPerSecond;
+		}
+
+		private void ResetTimestamp(object sender, EventArgs e) {
+			timestamp = -1;
 		}
 
 		private void DoUpdate(object sender, EventArgs e) {
@@ -33,6 +45,8 @@ namespace SVRichPresence {
 					presence.state = "Playing Co-op";
 				presence.details = String.Format("{0} Farm ({1}g)",
 					Game1.player.farmName.ToString(), Game1.player.Money);
+				if (timestamp >= 0)
+					presence.startTimestamp = timestamp;
 				if (Context.IsMultiplayer) {
 					presence.partySize = Game1.numberOfPlayers();
 					presence.partyMax = Game1.getFarm()
