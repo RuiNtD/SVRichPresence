@@ -9,8 +9,10 @@ using static DiscordRpc;
 namespace SVRichPresence {
 	public class ModEntry : Mod {
 		private const string clientId = "444517509148966923";
+		ModConfig config;
 
 		public override void Entry(IModHelper helper) {
+			config = Helper.ReadConfig<ModConfig>();
 			EventHandlers handlers = new EventHandlers();
 			DiscordRpc.Initialize(clientId, ref handlers, false, "413150");
 			GameEvents.UpdateTick += DoUpdate;
@@ -43,8 +45,8 @@ namespace SVRichPresence {
 					presence.state = "Hosting Co-op";
 				else
 					presence.state = "Playing Co-op";
-				presence.details = String.Format("{0} Farm ({1}g)",
-					Game1.player.farmName.ToString(), Game1.player.Money);
+				presence.details = String.Format("{0} ({1}g)",
+					FarmName(), Game1.player.Money);
 				if (timestamp >= 0)
 					presence.startTimestamp = timestamp;
 				if (Context.IsMultiplayer) {
@@ -71,6 +73,25 @@ namespace SVRichPresence {
 				date.Season.Substring(1);
 			return String.Format("Day {0} of {1}, Year {2}",
 				date.Day, season, date.Year);
+		}
+
+		private string FarmName() {
+			if (ShowFarmName())
+				return Game1.player.farmName.ToString() + " Farm";
+			else if (Context.IsMainPlayer)
+				return "My Farm";
+			else
+				return "Someone's Farm";
+		}
+
+		private Boolean ShowFarmName() {
+			if (!config.ShowFarmName)
+				return false;
+			string name = Game1.player.farmName.ToString().ToLower();
+			foreach (string entry in config.HideFarmNames)
+				if (name.Contains(entry.ToLower()))
+					return false;
+			return true;
 		}
 
 		private string FarmTypeKey() {
