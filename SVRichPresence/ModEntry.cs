@@ -65,8 +65,8 @@ namespace SVRichPresence {
 				presence = new RichPresence {
 					Details = $"{FarmName()} ({Game1.player.Money}g)",
 					State =
-						(!Context.IsMultiplayer) ? "Playing Solo" :
-						(!Context.IsMainPlayer) ? "Hosting Co-op" :
+						!Context.IsMultiplayer ? "Playing Solo" :
+						!Context.IsMainPlayer ? "Hosting Co-op" :
 						"Playing Co-op",
 					Assets = new Assets {
 						LargeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}",
@@ -77,7 +77,7 @@ namespace SVRichPresence {
 					Timestamps = new Timestamps {
 						Start = timestamp
 					},
-					Party = (!Context.IsMultiplayer) ? null : new Party {
+					Party = !Context.IsMultiplayer ? null : new Party {
 						ID = Constants.SaveFolderName,
 						Size = Game1.numberOfPlayers(),
 						Max = Game1.getFarm()
@@ -140,12 +140,8 @@ namespace SVRichPresence {
 		}
 
 		private string WeatherKey() {
-			if (Game1.isRaining) {
-				if (Game1.isLightning)
-					return "stormy";
-				else
-					return "rainy";
-			}
+			if (Game1.isRaining)
+				return Game1.isLightning ? "stormy" : "rainy";
 			if (Game1.isDebrisWeather)
 				return "windy_" + Game1.currentSeason;
 			if (Game1.isSnowing)
