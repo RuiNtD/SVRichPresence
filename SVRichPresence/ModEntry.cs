@@ -4,13 +4,16 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
+using static DiscordRpc;
 
 namespace SVRichPresence {
 	public class ModEntry : Mod {
+		private const string clientId = "444517509148966923";
+
 		public override void Entry(IModHelper helper) {
 			GameEvents.UpdateTick += this.DoUpdate;
-			DiscordRpc.EventHandlers handlers = new DiscordRpc.EventHandlers();
-			DiscordRpc.Initialize("444517509148966923", ref handlers, false, "413150");
+			EventHandlers handlers = new EventHandlers();
+			DiscordRpc.Initialize(clientId, ref handlers, false, "413150");
 		}
 
 		protected override void Dispose(bool disposing) {
@@ -18,9 +21,9 @@ namespace SVRichPresence {
 		}
 
 		private void DoUpdate(object sender, EventArgs e) {
-			string gamePresence = Helper.Reflection.GetField<string>(typeof(Game1), "debugPresenceString").GetValue();
-			DiscordRpc.RichPresence presence = new DiscordRpc.RichPresence();
-			presence.largeImageText = gamePresence;
+			RichPresence presence = new RichPresence();
+			presence.largeImageText = Helper.Reflection.GetField<string>
+				(typeof(Game1), "debugPresenceString").GetValue();
 			if (Context.IsWorldReady) {
 				if (!Context.IsMultiplayer)
 					presence.state = "Playing Solo";
@@ -28,14 +31,17 @@ namespace SVRichPresence {
 					presence.state = "Hosting Co-op";
 				else
 					presence.state = "Playing Co-op";
-				presence.details = Game1.player.farmName.ToString() + " Farm (" + Game1.player.Money + "G)";
+				presence.details = String.Format("{0} Farm ({1}g)",
+					Game1.player.farmName.ToString(), Game1.player.Money);
 				if (Context.IsMultiplayer) {
 					presence.partySize = Game1.numberOfPlayers();
-					presence.partyMax = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1;
+					presence.partyMax = Game1.getFarm()
+						.getNumberBuildingsConstructed("Cabin") + 1;
 					presence.partyId = Constants.SaveFolderName;
 				}
 				presence.smallImageKey = "weather_" + WeatherKey();
-				presence.largeImageKey = Game1.currentSeason + "_" + FarmTypeKey();
+				presence.largeImageKey =
+					Game1.currentSeason + "_" +FarmTypeKey();
 				presence.smallImageText = Date();
 			} else {
 				presence.state = "In Menus";
@@ -47,8 +53,10 @@ namespace SVRichPresence {
 
 		private string Date() {
 			SDate date = SDate.Now();
-			string season = date.Season.Substring(0, 1).ToUpper() + date.Season.Substring(1);
-			return "Day " + date.Day + " of " + season + ", Year " + date.Year;
+			string season = char.ToUpper(date.Season[0]) +
+				date.Season.Substring(1);
+			return String.Format("Day {0} of {1}, Year {2}",
+				date.Day, season, date.Year);
 		}
 
 		private string FarmTypeKey() {
@@ -66,24 +74,6 @@ namespace SVRichPresence {
 				default:
 					return "default";
 			}
-		}
-
-		private string WeatherName() {
-			if (Game1.isRaining) {
-				if (Game1.isLightning)
-					return "Stormy";
-				else
-					return "Rainy";
-			}
-			if (Game1.isDebrisWeather)
-				return "Windy";
-			if (Game1.isSnowing)
-				return "Snowy";
-			if (Game1.weddingToday)
-				return "Wedding Day";
-			if (Game1.isFestival())
-				return "Festival";
-			return "Sunny";
 		}
 
 		private string WeatherKey() {
