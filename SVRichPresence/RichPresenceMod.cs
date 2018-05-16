@@ -65,7 +65,7 @@ namespace SVRichPresence {
 					Details = $"{FarmName()} ({Game1.player.Money}g)",
 					State =
 						!Context.IsMultiplayer ? "Playing Solo" :
-						!Context.IsMainPlayer ? "Hosting Co-op" :
+						Context.IsMainPlayer ? "Hosting Co-op" :
 						"Playing Co-op",
 					Assets = new Assets {
 						LargeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}",
