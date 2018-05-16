@@ -11,7 +11,7 @@ namespace SVRichPresence {
 		private const string clientId = "444517509148966923";
 
 		public override void Entry(IModHelper helper) {
-			GameEvents.UpdateTick += this.DoUpdate;
+			GameEvents.UpdateTick += DoUpdate;
 			EventHandlers handlers = new EventHandlers();
 			DiscordRpc.Initialize(clientId, ref handlers, false, "413150");
 		}
