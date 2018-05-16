@@ -11,11 +11,11 @@ namespace SVRichPresence {
 		private const string clientId = "444517509148966923";
 
 		public override void Entry(IModHelper helper) {
+			EventHandlers handlers = new EventHandlers();
+			DiscordRpc.Initialize(clientId, ref handlers, false, "413150");
 			GameEvents.UpdateTick += DoUpdate;
 			SaveEvents.AfterLoad += SetTimestamp;
 			SaveEvents.AfterReturnToTitle += ResetTimestamp;
-			EventHandlers handlers = new EventHandlers();
-			DiscordRpc.Initialize(clientId, ref handlers, false, "413150");
 		}
 
 		private long timestamp = 0;
