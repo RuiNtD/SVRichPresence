@@ -55,7 +55,7 @@ namespace SVRichPresence {
 				}
 				presence.smallImageKey = "weather_" + WeatherKey();
 				presence.largeImageKey =
-					Game1.currentSeason + "_" +FarmTypeKey();
+					Game1.currentSeason + "_" + FarmTypeKey();
 				presence.smallImageText = Date();
 			} else {
 				presence.state = "In Menus";
