@@ -28,10 +28,6 @@ namespace SVRichPresence {
 
 		private DateTime? timestamp;
 
-		protected override void Dispose(bool disposing) {
-			client.Dispose();
-		}
-
 		private void OnReady(object sender, ReadyMessage args) {
 			User user = args.User;
 			Monitor.Log($"Connected to: {user.Username}#{user.Discriminator} ({user.ID})", LogLevel.Info);
