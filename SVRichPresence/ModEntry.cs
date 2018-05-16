@@ -15,6 +15,9 @@ namespace SVRichPresence {
 
 		public override void Entry(IModHelper helper) {
 			client = new DiscordRpcClient(clientId, "413150", false);
+			client.OnReady += OnReady;
+			client.OnError += OnError;
+			client.OnClose += OnDisconnect;
 			client.Initialize();
 			config = Helper.ReadConfig<ModConfig>();
 			GameEvents.UpdateTick += DoUpdate;
@@ -28,6 +31,19 @@ namespace SVRichPresence {
 			client.Dispose();
 		}
 
+		private void OnReady(object sender, ReadyMessage args) {
+			User user = args.User;
+			Monitor.Log($"Connected to: {user.Username}#{user.Discriminator} ({user.ID})", LogLevel.Info);
+		}
+
+		private void OnError(object sender, ErrorMessage args) {
+			Monitor.Log($"Error ({args.Code}) : {args.Message}", LogLevel.Error);
+		}
+
+		private void OnDisconnect(object sender, CloseMessage args) {
+			Monitor.Log($"Disconnected: {args.Reason}", LogLevel.Warn);
+		}
+
 		private void SetTimestamp(object sender, EventArgs e) {
 			timestamp = DateTime.UtcNow;
 		}
@@ -37,6 +53,7 @@ namespace SVRichPresence {
 		}
 
 		private void DoUpdate(object sender, EventArgs e) {
+			client.Invoke();
 			RichPresence presence;
 			string gamePresence = Helper.Reflection.GetField<string>
 						(typeof(Game1), "debugPresenceString").GetValue();
