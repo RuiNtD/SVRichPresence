@@ -8,7 +8,7 @@ using StardewModdingAPI.Utilities;
 using StardewValley;
 
 namespace SVRichPresence {
-	public class ModEntry : Mod {
+	public class RichPresenceMod : Mod {
 		private const string clientId = "444517509148966923";
 		DiscordRpcClient client;
 		ModConfig config;

@@ -48,7 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ModConfig.cs" />
-    <Compile Include="ModEntry.cs" />
+    <Compile Include="RichPresenceMod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
