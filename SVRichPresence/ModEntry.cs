@@ -27,7 +27,8 @@ namespace SVRichPresence {
 		}
 
 		private void SetTimestamp(object sender, EventArgs e) {
-			timestamp = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).Ticks / TimeSpan.TicksPerSecond;
+			timestamp = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).Ticks /
+				TimeSpan.TicksPerSecond;
 		}
 
 		private void ResetTimestamp(object sender, EventArgs e) {
@@ -45,8 +46,7 @@ namespace SVRichPresence {
 					presence.state = "Hosting Co-op";
 				else
 					presence.state = "Playing Co-op";
-				presence.details = String.Format("{0} ({1}g)",
-					FarmName(), Game1.player.Money);
+				presence.details = $"{FarmName()} ({Game1.player.Money}g)";
 				if (timestamp >= 0)
 					presence.startTimestamp = timestamp;
 				if (Context.IsMultiplayer) {
@@ -56,8 +56,7 @@ namespace SVRichPresence {
 					presence.partyId = Constants.SaveFolderName;
 				}
 				presence.smallImageKey = "weather_" + WeatherKey();
-				presence.largeImageKey =
-					Game1.currentSeason + "_" + FarmTypeKey();
+				presence.largeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}";
 				presence.smallImageText = Date();
 			} else {
 				presence.state = "In Menus";
@@ -71,8 +70,7 @@ namespace SVRichPresence {
 			SDate date = SDate.Now();
 			string season = char.ToUpper(date.Season[0]) +
 				date.Season.Substring(1);
-			return String.Format("Day {0} of {1}, Year {2}",
-				date.Day, season, date.Year);
+			return $"Day {date.Day} of {season}, Year {date.Year}";
 		}
 
 		private string FarmName() {
