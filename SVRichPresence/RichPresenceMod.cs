@@ -54,11 +54,14 @@ namespace SVRichPresence {
 		}
 
 		private void DoUpdate(object sender, EventArgs e) {
-			RichPresence presence;
+			client.SetPresence(GetPresence());
+		}
+
+		private RichPresence GetPresence() {
 			string gamePresence = Helper.Reflection.GetField<string>
 						(typeof(Game1), "debugPresenceString").GetValue();
 			if (Context.IsWorldReady)
-				presence = new RichPresence {
+				return new RichPresence {
 					Details = $"{FarmName()} ({Game1.player.Money}g)",
 					State =
 						!Context.IsMultiplayer ? "Playing Solo" :
@@ -81,7 +84,7 @@ namespace SVRichPresence {
 					}
 				};
 			else
-				presence = new RichPresence {
+				return new RichPresence {
 					State = "In Menus",
 					Assets = new Assets {
 						SmallImageKey = "default_small",
@@ -89,7 +92,6 @@ namespace SVRichPresence {
 						LargeImageText = gamePresence
 					}
 				};
-			client.SetPresence(presence);
 		}
 
 		private string Date() {
