@@ -20,7 +20,8 @@ namespace SVRichPresence {
 			client.OnClose += OnDisconnect;
 			client.Initialize();
 			config = Helper.ReadConfig<ModConfig>();
-			GameEvents.UpdateTick += DoUpdate;
+			GameEvents.UpdateTick += DoHandle;
+			GameEvents.HalfSecondTick += DoUpdate;
 			SaveEvents.AfterLoad += SetTimestamp;
 			SaveEvents.AfterReturnToTitle += ResetTimestamp;
 		}
@@ -52,8 +53,11 @@ namespace SVRichPresence {
 			timestamp = null;
 		}
 
-		private void DoUpdate(object sender, EventArgs e) {
+		private void DoHandle(object sender, EventArgs e) {
 			client.Invoke();
+		}
+
+		private void DoUpdate(object sender, EventArgs e) {
 			RichPresence presence;
 			string gamePresence = Helper.Reflection.GetField<string>
 						(typeof(Game1), "debugPresenceString").GetValue();
