@@ -77,7 +77,7 @@ namespace SVRichPresence {
 						Start = timestamp
 					},
 					Party = !Context.IsMultiplayer ? null : new Party {
-						ID = Constants.SaveFolderName,
+						ID = Game1.MasterPlayer.UniqueMultiplayerID.ToString(),
 						Size = Game1.numberOfPlayers(),
 						Max = Game1.getFarm()
 							.getNumberBuildingsConstructed("Cabin") + 1
