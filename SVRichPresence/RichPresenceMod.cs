@@ -111,9 +111,7 @@ namespace SVRichPresence {
 		}
 
 		private Boolean ShowFarmName() {
-			if (!config.ShowFarmName)
-				return false;
-			string name = Game1.player.farmName.ToString().ToLower();
+			string name = Game1.player.farmName.ToString().ToLower() + " farm";
 			foreach (string entry in config.HideFarmNames)
 				if (name.Contains(entry.ToLower()))
 					return false;
