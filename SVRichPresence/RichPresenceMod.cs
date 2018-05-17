@@ -10,8 +10,8 @@ using StardewValley;
 namespace SVRichPresence {
 	public class RichPresenceMod : Mod {
 		private const string clientId = "444517509148966923";
-		DiscordRpcClient client;
-		ModConfig config;
+		private DiscordRpcClient client;
+		private ModConfig config;
 
 		public override void Entry(IModHelper helper) {
 			client = new DiscordRpcClient(clientId, "413150", false);
