@@ -38,7 +38,7 @@ namespace SVRichPresence {
 			config = Helper.ReadConfig<ModConfig>();
 			GameEvents.UpdateTick += DoHandle;
 			GameEvents.HalfSecondTick += DoUpdate;
-			SaveEvents.AfterLoad += SetTimestamp;
+			SaveEvents.AfterLoad += OnLoad;
 			SaveEvents.AfterReturnToTitle += ResetTimestamp;
 		}
 
@@ -57,8 +57,9 @@ namespace SVRichPresence {
 			Monitor.Log($"Disconnected: {args.Reason}", LogLevel.Warn);
 		}
 
-		private void SetTimestamp(object sender, EventArgs e) {
+		private void OnLoad(object sender, EventArgs e) {
 			timestamp = DateTime.UtcNow;
+			Game1.setRichPresence("location", Context.IsMainPlayer ? "FarmHouse" : "Cabin");
 		}
 
 		private void ResetTimestamp(object sender, EventArgs e) {
