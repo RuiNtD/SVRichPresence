@@ -14,6 +14,18 @@ namespace SVRichPresence {
 		private ModConfig config;
 
 		public override void Entry(IModHelper helper) {
+			#if DEBUG
+				Monitor.Log("THIS IS A DEBUG BUILD...", LogLevel.Alert);
+				Monitor.Log("...FOR DEBUGGING...", LogLevel.Alert);
+				Monitor.Log("...AND STUFF...", LogLevel.Alert);
+				if (!ModManifest.Version.IsPrerelease()) {
+					Monitor.Log("If you're Fayne, keep up the good work. :)", LogLevel.Alert);
+					Monitor.Log("If you're not Fayne...", LogLevel.Alert);
+					Monitor.Log("...please go yell at Fayne...", LogLevel.Alert);
+					Monitor.Log("...because you shouldn't have this...", LogLevel.Alert);
+					Monitor.Log("...it's for debugging. (:", LogLevel.Alert);
+				}
+			#endif
 			client = new DiscordRpcClient(clientId, "413150", false);
 			client.OnReady += OnReady;
 			client.OnError += OnError;
