@@ -14,18 +14,18 @@ namespace SVRichPresence {
 		private ModConfig config;
 
 		public override void Entry(IModHelper helper) {
-			#if DEBUG
-				Monitor.Log("THIS IS A DEBUG BUILD...", LogLevel.Alert);
-				Monitor.Log("...FOR DEBUGGING...", LogLevel.Alert);
-				Monitor.Log("...AND STUFF...", LogLevel.Alert);
-				if (!ModManifest.Version.IsPrerelease()) {
-					Monitor.Log("If you're Fayne, keep up the good work. :)", LogLevel.Alert);
-					Monitor.Log("If you're not Fayne...", LogLevel.Alert);
-					Monitor.Log("...please go yell at Fayne...", LogLevel.Alert);
-					Monitor.Log("...because you shouldn't have this...", LogLevel.Alert);
-					Monitor.Log("...it's for debugging. (:", LogLevel.Alert);
-				}
-			#endif
+#if DEBUG
+			Monitor.Log("THIS IS A DEBUG BUILD...", LogLevel.Alert);
+			Monitor.Log("...FOR DEBUGGING...", LogLevel.Alert);
+			Monitor.Log("...AND STUFF...", LogLevel.Alert);
+			if (!ModManifest.Version.IsPrerelease()) {
+				Monitor.Log("If you're Fayne, keep up the good work. :)", LogLevel.Alert);
+				Monitor.Log("If you're not Fayne...", LogLevel.Alert);
+				Monitor.Log("...please go yell at Fayne...", LogLevel.Alert);
+				Monitor.Log("...because you shouldn't have this...", LogLevel.Alert);
+				Monitor.Log("...it's for debugging. (:", LogLevel.Alert);
+			}
+#endif
 			client = new DiscordRpcClient(clientId, "413150", false);
 			client.OnReady += OnReady;
 			client.OnError += OnError;
@@ -83,7 +83,7 @@ namespace SVRichPresence {
 						LargeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}",
 						SmallImageKey = "weather_" + WeatherKey(),
 						LargeImageText = gamePresence,
-						SmallImageText = Date()
+						SmallImageText = Game1.Date.Localize()
 					},
 					Timestamps = new Timestamps {
 						Start = timestamp
@@ -104,13 +104,6 @@ namespace SVRichPresence {
 						LargeImageText = gamePresence
 					}
 				};
-		}
-
-		private string Date() {
-			SDate date = SDate.Now();
-			string season = char.ToUpper(date.Season[0]) +
-				date.Season.Substring(1);
-			return $"Day {date.Day} of {season}, Year {date.Year}";
 		}
 
 		private string FarmName() {
