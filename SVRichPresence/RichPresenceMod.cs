@@ -26,7 +26,11 @@ namespace SVRichPresence {
 				Monitor.Log("...it's for debugging. (:", LogLevel.Alert);
 			}
 #endif
-			client = new DiscordRpcClient(clientId, "413150", false);
+			client = new DiscordRpcClient(clientId, "413150", false) {
+				Logger = new MonitorLogger(Monitor) {
+					Level = DiscordRPC.Logging.LogLevel.Warning
+				}
+			};
 			client.OnReady += OnReady;
 			client.OnError += OnError;
 			client.OnClose += OnDisconnect;

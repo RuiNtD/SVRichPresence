@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ModConfig.cs" />
+    <Compile Include="MonitorLogger.cs" />
     <Compile Include="RichPresenceMod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
