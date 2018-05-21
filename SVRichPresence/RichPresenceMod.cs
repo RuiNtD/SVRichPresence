@@ -99,7 +99,7 @@ namespace SVRichPresence {
 						LargeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}",
 						SmallImageKey = "weather_" + WeatherKey(),
 						LargeImageText = gamePresence,
-						SmallImageText = Game1.Date.Localize()
+						SmallImageText = Utility.getDateString()
 					},
 					Timestamps = new Timestamps {
 						Start = timestamp
