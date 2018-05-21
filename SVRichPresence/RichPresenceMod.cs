@@ -121,6 +121,11 @@ namespace SVRichPresence {
 				};
 		}
 
+		private void SetPresence(string str, params object[] args) {
+			Helper.Reflection.GetField<string>
+				(typeof(Game1), "debugPresenceString").SetValue(String.Format(str));
+		}
+
 		private string FarmName() {
 			if (ShowFarmName())
 				return Game1.player.farmName.ToString() + " Farm";
