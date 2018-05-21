@@ -11,7 +11,7 @@ namespace SVRichPresence {
 	public class RichPresenceMod : Mod {
 		private const string clientId = "444517509148966923";
 		private DiscordRpcClient client;
-		private ModConfig config;
+		private ModConfig config = new ModConfig();
 
 		public override void Entry(IModHelper helper) {
 #if DEBUG
@@ -35,11 +35,22 @@ namespace SVRichPresence {
 			client.OnError += OnError;
 			client.OnClose += OnDisconnect;
 			client.Initialize();
-			config = Helper.ReadConfig<ModConfig>();
+			Helper.ConsoleCommands.Add("DiscordRP_Reload",
+				"Reloads the config for Discord Rich Presence.",
+				(string command, string[] args) => {
+					LoadConfig();
+					Monitor.Log("Config reloaded.", LogLevel.Info);
+				}
+			);
+			LoadConfig();
 			GameEvents.UpdateTick += DoHandle;
 			GameEvents.HalfSecondTick += DoUpdate;
 			SaveEvents.AfterLoad += OnLoad;
 			SaveEvents.AfterReturnToTitle += ResetTimestamp;
+		}
+
+		private void LoadConfig() {
+			config = Helper.ReadConfig<ModConfig>();
 		}
 
 		private DateTime? timestamp;
