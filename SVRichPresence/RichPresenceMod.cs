@@ -169,10 +169,10 @@ namespace SVRichPresence {
 				}
 
 				tags["Health"] = Game1.player.health.ToString();
-				tags["MaxHealth"] = Game1.player.maxHealth.ToString();
+				tags["HealthMax"] = Game1.player.maxHealth.ToString();
 				tags["HealthPercent"] = Percent(Game1.player.health, Game1.player.maxHealth).ToString();
 				tags["Energy"] = Game1.player.Stamina.ToString();
-				tags["MaxEnergy"] = Game1.player.MaxStamina.ToString();
+				tags["EnergyMax"] = Game1.player.MaxStamina.ToString();
 				tags["EnergyPercent"] = Percent(Game1.player.Stamina, Game1.player.MaxStamina).ToString();
 
 				tags["Time"] = Game1.getTimeOfDayString(Game1.timeOfDay);
