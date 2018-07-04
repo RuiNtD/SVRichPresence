@@ -1,9 +1,7 @@
-﻿using System;
-using Microsoft.Xna.Framework;
-using StardewModdingAPI;
+﻿using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
 using StardewValley;
+using System;
 
 namespace SVRichPresence {
 	public class RichPresenceMod : Mod {
@@ -24,9 +22,6 @@ namespace SVRichPresence {
 			}
 #endif
 			var handlers = new DiscordRpc.EventHandlers();
-			handlers.readyCallback = OnReady;
-			handlers.disconnectedCallback += OnDisconnect;
-			handlers.errorCallback += OnError;
 			DiscordRpc.Initialize(applicationId, ref handlers, false, "413150");
 			Helper.ConsoleCommands.Add("DiscordRP_Reload",
 				"Reloads the config for Discord Rich Presence.",
@@ -36,20 +31,20 @@ namespace SVRichPresence {
 				}
 			);
 			LoadConfig();
-			GameEvents.UpdateTick += (object sender, EventArgs e) =>
-				DiscordRpc.RunCallbacks();
-			GameEvents.HalfSecondTick += (object sender, EventArgs e) =>
-				DiscordRpc.UpdatePresence(GetPresence());
-			SaveEvents.AfterLoad += (object sender, EventArgs e) =>
+			GameEvents.HalfSecondTick += DoUpdate;
+			SaveEvents.AfterLoad += SetTimestamp;
+			SaveEvents.AfterReturnToTitle += SetTimestamp;
+			GameEvents.FirstUpdateTick += (object sender, EventArgs e) => {
 				SetTimestamp();
-			SaveEvents.AfterReturnToTitle += (object sender, EventArgs e) =>
-				SetTimestamp();
-			SetTimestamp();
+				timestampSession = GetTimestamp();
+			};
 		}
-
-		private void LoadConfig() {
+		
+		private void LoadConfig() =>
 			config = Helper.ReadConfig<ModConfig>();
-		}
+
+		private void SaveConfig() =>
+			Helper.WriteConfig<ModConfig>(config);
 
 		private string GamePresence {
 			get => Helper.Reflection.GetField<string>
@@ -58,61 +53,91 @@ namespace SVRichPresence {
 				(typeof(Game1), "debugPresenceString").SetValue(value);
 		}
 
-		private long timestamp;
+		private long timestampSession = 0;
+		private long timestampFarm = 0;
 
-		private void OnReady(ref DiscordRpc.DiscordUser user) {
-			Monitor.Log($"Connected to {user.username}#{user.discriminator} ({user.userId})", LogLevel.Info);
-		}
+		private void SetTimestamp(object sender, EventArgs e) =>
+				SetTimestamp();
+		private void SetTimestamp() =>
+			timestampFarm = GetTimestamp();
 
-		private void OnDisconnect(int errorCode, string message) {
-			Monitor.Log($"Disconnect {errorCode}: {message}", LogLevel.Warn);
-		}
-
-		private void OnError(int errorCode, string message) {
-			Monitor.Log($"Error ({errorCode}) : {message}", LogLevel.Error);
-		}
-
-		private void SetTimestamp() {
+		private long GetTimestamp() {
 			var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-			timestamp = Convert.ToInt64((DateTime.UtcNow - epoch).TotalSeconds);
+			return Convert.ToInt64((DateTime.UtcNow - epoch).TotalSeconds);
 		}
+
+		private void DoUpdate(object sender, EventArgs e) =>
+			DiscordRpc.UpdatePresence(GetPresence());
 		
 		private DiscordRpc.RichPresence GetPresence() {
 			var presence = new DiscordRpc.RichPresence();
 			if (Context.IsWorldReady) {
-				presence.details = $"{FarmName()} ({Game1.player.Money}g)";
-				presence.largeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}";
-				presence.smallImageKey = "weather_" + WeatherKey();
-				presence.largeImageText = GamePresence;
-				presence.smallImageText = Utility.getDateString();
-				presence.startTimestamp = timestamp;
-				if (Context.IsMultiplayer) {
+
+				if (config.ShowMoney)
+					presence.details = $"{FarmName()} ({Game1.player.Money}g)";
+				else if (config.ShowFarmName)
+					presence.details = FarmName();
+
+				// Limitation: Can't hide season and show farm type.
+				// In that scenario, both are hidden.
+
+				if (config.ShowSeason)
+					presence.largeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}";
+				else if (config.ShowActivity)
+					// Can't show activity without large image. Use default.
+					presence.largeImageKey = "default_large";
+
+				if (config.ShowWeather)
+					presence.smallImageKey = "weather_" + WeatherKey();
+				else if (config.ShowDate)
+					// Can't show date without small image. Use default.
+					presence.smallImageKey = "default_small";
+
+				if (config.ShowDate)
+					presence.smallImageText = Utility.getDateString();
+
+				if (config.ShowPlayTime)
+					presence.startTimestamp = timestampFarm;
+
+				if (!config.ShowCoop)
+					presence.state = "Playing";
+				else if (Context.IsMultiplayer) {
 					presence.partyId = Game1.MasterPlayer.UniqueMultiplayerID.ToString();
 					presence.partySize = Game1.numberOfPlayers();
 					presence.partyMax = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1;
 					presence.state = Context.IsMainPlayer ? "Hosting Co-op" : "Playing Co-op";
-				} else {
+				} else
 					presence.state = "Playing Solo";
-				}
+
 			} else {
 				presence.state = "In Menus";
 				presence.smallImageKey = "default_small";
 				presence.largeImageKey = "default_large";
-				presence.largeImageText = GamePresence;
 			}
+
+			if (config.ShowPlayTime && config.PlayTimeEntireSession)
+				presence.startTimestamp = timestampSession;
+
+			if (config.ShowActivity)
+				presence.largeImageText = GamePresence;
+
 			return presence;
 		}
 
 		private string FarmName() {
 			if (ShowFarmName())
 				return Game1.player.farmName.ToString() + " Farm";
-			else if (Context.IsMainPlayer)
+			else if (Context.IsMainPlayer && config.ShowCoop)
 				return "My Farm";
 			else
 				return "Someone's Farm";
 		}
 
 		private Boolean ShowFarmName() {
+			if (!config.ShowFarmName)
+				return false;
+			if (config.HideFarmNames.Contains("*"))
+				return false;
 			string name = Game1.player.farmName.ToString().ToLower() + " farm";
 			foreach (string entry in config.HideFarmNames)
 				if (name.Contains(entry.ToLower()))
@@ -121,6 +146,8 @@ namespace SVRichPresence {
 		}
 
 		private string FarmTypeKey() {
+			if (!config.ShowFarmType)
+				return "default";
 			switch (Game1.whichFarm) {
 				case Farm.default_layout:
 					return "standard";
