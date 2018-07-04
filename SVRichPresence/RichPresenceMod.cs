@@ -1,6 +1,4 @@
 ﻿using System;
-using DiscordRPC;
-using DiscordRPC.Message;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -9,8 +7,7 @@ using StardewValley;
 
 namespace SVRichPresence {
 	public class RichPresenceMod : Mod {
-		private const string clientId = "444517509148966923";
-		private DiscordRpcClient client;
+		private const string applicationId = "444517509148966923";
 		private ModConfig config = new ModConfig();
 
 		public override void Entry(IModHelper helper) {
@@ -26,15 +23,11 @@ namespace SVRichPresence {
 				Monitor.Log("...it's for debugging. (:", LogLevel.Alert);
 			}
 #endif
-			client = new DiscordRpcClient(clientId, "413150", false) {
-				Logger = new MonitorLogger(Monitor) {
-					Level = DiscordRPC.Logging.LogLevel.Warning
-				}
-			};
-			client.OnReady += OnReady;
-			client.OnError += OnError;
-			client.OnClose += OnDisconnect;
-			client.Initialize();
+			var handlers = new DiscordRpc.EventHandlers();
+			handlers.readyCallback = OnReady;
+			handlers.disconnectedCallback += OnDisconnect;
+			handlers.errorCallback += OnError;
+			DiscordRpc.Initialize(applicationId, ref handlers, false, "413150");
 			Helper.ConsoleCommands.Add("DiscordRP_Reload",
 				"Reloads the config for Discord Rich Presence.",
 				(string command, string[] args) => {
@@ -43,87 +36,71 @@ namespace SVRichPresence {
 				}
 			);
 			LoadConfig();
-			GameEvents.UpdateTick += DoHandle;
-			GameEvents.HalfSecondTick += DoUpdate;
-			SaveEvents.AfterLoad += SetTimestamp;
-			SaveEvents.AfterReturnToTitle += ResetTimestamp;
+			GameEvents.UpdateTick += (object sender, EventArgs e) =>
+				DiscordRpc.RunCallbacks();
+			GameEvents.HalfSecondTick += (object sender, EventArgs e) =>
+				DiscordRpc.UpdatePresence(GetPresence());
+			SaveEvents.AfterLoad += (object sender, EventArgs e) =>
+				SetTimestamp();
+			SaveEvents.AfterReturnToTitle += (object sender, EventArgs e) =>
+				SetTimestamp();
+			SetTimestamp();
 		}
 
 		private void LoadConfig() {
 			config = Helper.ReadConfig<ModConfig>();
 		}
 
-		private DateTime? timestamp;
-
-		private void OnReady(object sender, ReadyMessage args) {
-			User user = args.User;
-			Monitor.Log($"Connected to: {user.Username}#{user.Discriminator} ({user.ID})", LogLevel.Info);
+		private string GamePresence {
+			get => Helper.Reflection.GetField<string>
+				(typeof(Game1), "debugPresenceString").GetValue();
+			set => Helper.Reflection.GetField<string>
+				(typeof(Game1), "debugPresenceString").SetValue(value);
 		}
 
-		private void OnError(object sender, ErrorMessage args) {
-			Monitor.Log($"Error ({args.Code}) : {args.Message}", LogLevel.Error);
+		private long timestamp;
+
+		private void OnReady(ref DiscordRpc.DiscordUser user) {
+			Monitor.Log($"Connected to {user.username}#{user.discriminator} ({user.userId})", LogLevel.Info);
 		}
 
-		private void OnDisconnect(object sender, CloseMessage args) {
-			Monitor.Log($"Disconnected: {args.Reason}", LogLevel.Warn);
+		private void OnDisconnect(int errorCode, string message) {
+			Monitor.Log($"Disconnect {errorCode}: {message}", LogLevel.Warn);
 		}
 
-		private void SetTimestamp(object sender, EventArgs e) {
-			timestamp = DateTime.UtcNow;
+		private void OnError(int errorCode, string message) {
+			Monitor.Log($"Error ({errorCode}) : {message}", LogLevel.Error);
 		}
 
-		private void ResetTimestamp(object sender, EventArgs e) {
-			timestamp = null;
+		private void SetTimestamp() {
+			var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+			timestamp = Convert.ToInt64((DateTime.UtcNow - epoch).TotalSeconds);
 		}
-
-		private void DoHandle(object sender, EventArgs e) {
-			client.Invoke();
-		}
-
-		private void DoUpdate(object sender, EventArgs e) {
-			client.SetPresence(GetPresence());
-		}
-
-		private RichPresence GetPresence() {
-			string gamePresence = Helper.Reflection.GetField<string>
-						(typeof(Game1), "debugPresenceString").GetValue();
-			if (Context.IsWorldReady)
-				return new RichPresence {
-					Details = $"{FarmName()} ({Game1.player.Money}g)",
-					State =
-						!Context.IsMultiplayer ? "Playing Solo" :
-						Context.IsMainPlayer ? "Hosting Co-op" :
-						"Playing Co-op",
-					Assets = new Assets {
-						LargeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}",
-						SmallImageKey = "weather_" + WeatherKey(),
-						LargeImageText = gamePresence,
-						SmallImageText = Utility.getDateString()
-					},
-					Timestamps = new Timestamps {
-						Start = timestamp
-					},
-					Party = !Context.IsMultiplayer ? null : new Party {
-						ID = Game1.MasterPlayer.UniqueMultiplayerID.ToString(),
-						Size = Game1.numberOfPlayers(),
-						Max = Game1.getFarm()
-							.getNumberBuildingsConstructed("Cabin") + 1
-					}
-				};
-			else
-				return new RichPresence {
-					State = "In Menus",
-					Assets = new Assets {
-						SmallImageKey = "default_small",
-						LargeImageKey = "default_large",
-						LargeImageText = gamePresence
-					}
-				};
-		}
-
-		private void SetPresence(string str, params object[] args) {
-			Helper.Reflection.GetField<string>
-				(typeof(Game1), "debugPresenceString").SetValue(String.Format(str));
+		
+		private DiscordRpc.RichPresence GetPresence() {
+			var presence = new DiscordRpc.RichPresence();
+			if (Context.IsWorldReady) {
+				presence.details = $"{FarmName()} ({Game1.player.Money}g)";
+				presence.largeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}";
+				presence.smallImageKey = "weather_" + WeatherKey();
+				presence.largeImageText = GamePresence;
+				presence.smallImageText = Utility.getDateString();
+				presence.startTimestamp = timestamp;
+				if (Context.IsMultiplayer) {
+					presence.partyId = Game1.MasterPlayer.UniqueMultiplayerID.ToString();
+					presence.partySize = Game1.numberOfPlayers();
+					presence.partyMax = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1;
+					presence.state = Context.IsMainPlayer ? "Hosting Co-op" : "Playing Co-op";
+				} else {
+					presence.state = "Playing Solo";
+				}
+			} else {
+				presence.state = "In Menus";
+				presence.smallImageKey = "default_small";
+				presence.largeImageKey = "default_large";
+				presence.largeImageText = GamePresence;
+			}
+			return presence;
 		}
 
 		private string FarmName() {
