@@ -16,12 +16,22 @@ namespace SVRichPresence {
 			Monitor.Log("THIS IS A DEBUG BUILD...", LogLevel.Alert);
 			Monitor.Log("...FOR DEBUGGING...", LogLevel.Alert);
 			Monitor.Log("...AND STUFF...", LogLevel.Alert);
-			if (!ModManifest.Version.IsPrerelease()) {
+			if (ModManifest.Version.IsPrerelease()) {
+				Monitor.Log("oh wait this is a dev build.", LogLevel.Info);
+				Monitor.Log("carry on.", LogLevel.Info);
+			} else {
 				Monitor.Log("If you're Fayne, keep up the good work. :)", LogLevel.Alert);
 				Monitor.Log("If you're not Fayne...", LogLevel.Alert);
 				Monitor.Log("...please go yell at Fayne...", LogLevel.Alert);
 				Monitor.Log("...because you shouldn't have this...", LogLevel.Alert);
 				Monitor.Log("...it's for debugging. (:", LogLevel.Alert);
+			}
+#else
+			if (ModManifest.Version.IsPrerelease()) {
+				Monitor.Log("WAIT A MINUTE.", LogLevel.Alert);
+				Monitor.Log("FAYNE.", LogLevel.Alert);
+				Monitor.Log("WHY DID YOU RELEASE A NON-DEBUG DEV BUILD?!", LogLevel.Alert);
+				Monitor.Log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", LogLevel.Alert);
 			}
 #endif
 			var handlers = new DiscordRpc.EventHandlers();
