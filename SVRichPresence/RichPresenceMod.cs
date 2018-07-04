@@ -1,7 +1,10 @@
 ﻿using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace SVRichPresence {
 	public class RichPresenceMod : Mod {
@@ -30,16 +33,38 @@ namespace SVRichPresence {
 					Monitor.Log("Config reloaded.", LogLevel.Info);
 				}
 			);
+			Helper.ConsoleCommands.Add("DiscordRP_Format",
+				"Formats and prints a provided configuration string.",
+				(string command, string[] args) => {
+					var text = FormatText(String.Join(" ", args));
+					Monitor.Log("Result: " + text, LogLevel.Info);
+				}
+			);
 			LoadConfig();
+			InputEvents.ButtonReleased += HandleButton;
 			GameEvents.HalfSecondTick += DoUpdate;
 			SaveEvents.AfterLoad += SetTimestamp;
 			SaveEvents.AfterReturnToTitle += SetTimestamp;
+			SaveEvents.AfterLoad += (object sender, EventArgs e) =>
+				GamePresence = "Getting Started";
 			GameEvents.FirstUpdateTick += (object sender, EventArgs e) => {
 				SetTimestamp();
 				timestampSession = GetTimestamp();
 			};
 		}
-		
+
+		private void HandleButton(object sender, EventArgsInput e) {
+			if (e.Button != config.ReloadConfigButton)
+				return;
+			try {
+				LoadConfig();
+				Game1.addHUDMessage(new HUDMessage("DiscordRP config reloaded."));
+			} catch (Exception err) {
+				Game1.addHUDMessage(new HUDMessage("Failed to reload DiscordRP config. Check console.", 3));
+				Monitor.Log(err.ToString(), LogLevel.Error);
+			}
+		}
+
 		private void LoadConfig() =>
 			config = Helper.ReadConfig<ModConfig>();
 
@@ -69,73 +94,133 @@ namespace SVRichPresence {
 		private void DoUpdate(object sender, EventArgs e) =>
 			DiscordRpc.UpdatePresence(GetPresence());
 		
+		private MenuPresence Conf {
+			get => !Context.IsWorldReady ? config.MenuPresence :
+				config.GamePresence;
+		}
+
 		private DiscordRpc.RichPresence GetPresence() {
-			var presence = new DiscordRpc.RichPresence();
+			var presence = new DiscordRpc.RichPresence {
+				largeImageKey = "default_large",
+				details = FormatText(Conf.Details),
+				state = FormatText(Conf.State),
+				largeImageText = FormatText(Conf.LargeImageText),
+				smallImageText = FormatText(Conf.SmallImageText)
+			};
+			if (Conf.ForceSmallImage)
+				presence.smallImageKey = "default_small";
+
 			if (Context.IsWorldReady) {
-
-				if (config.ShowMoney)
-					presence.details = $"{FarmName()} ({Game1.player.Money}g)";
-				else if (config.ShowFarmName)
-					presence.details = FarmName();
-
-				// Limitation: Can't hide season and show farm type.
-				// In that scenario, both are hidden.
-
-				if (config.ShowSeason)
+				var conf = (GamePresence) Conf;
+				if (conf.ShowSeason)
 					presence.largeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}";
-				else if (config.ShowActivity)
-					// Can't show activity without large image. Use default.
-					presence.largeImageKey = "default_large";
-
-				if (config.ShowWeather)
+				if (conf.ShowWeather)
 					presence.smallImageKey = "weather_" + WeatherKey();
-				else if (config.ShowDate)
-					// Can't show date without small image. Use default.
-					presence.smallImageKey = "default_small";
-
-				if (config.ShowDate)
-					presence.smallImageText = Utility.getDateString();
-
-				if (config.ShowPlayTime)
+				if (conf.ShowPlayTime)
 					presence.startTimestamp = timestampFarm;
-
-				if (!config.ShowCoop)
-					presence.state = "Playing";
-				else if (Context.IsMultiplayer) {
+				if (Context.IsMultiplayer && conf.ShowPlayerCount) {
 					presence.partyId = Game1.MasterPlayer.UniqueMultiplayerID.ToString();
 					presence.partySize = Game1.numberOfPlayers();
 					presence.partyMax = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1;
-					presence.state = Context.IsMainPlayer ? "Hosting Co-op" : "Playing Co-op";
-				} else
-					presence.state = "Playing Solo";
-
-			} else {
-				presence.state = "In Menus";
-				presence.smallImageKey = "default_small";
-				presence.largeImageKey = "default_large";
+				}
 			}
-
-			if (config.ShowPlayTime && config.PlayTimeEntireSession)
+			
+			if (presence.smallImageText != null)
+				presence.smallImageKey = presence.smallImageKey ?? "default_small";
+			if (config.ShowGlobalPlayTime)
 				presence.startTimestamp = timestampSession;
 
-			if (config.ShowActivity)
-				presence.largeImageText = GamePresence;
-
 			return presence;
+		}
+
+		private string FormatText(string text) {
+			if (text.Length == 0)
+				return null;
+
+			int modCount = 0;
+			foreach (IManifest manifest in Helper.ModRegistry.GetAll())
+				modCount++;
+
+			// Code is copied and modified from SMAPI.
+			var tags = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase) {
+				["Activity"] = GamePresence,
+				["ModCount"] = modCount.ToString(),
+				["SMAPIVersion"] = Constants.ApiVersion.ToString(),
+				["StardewVersion"] = Game1.version
+			};
+
+			// All the tags below are only available while in a farm.
+			if (Context.IsWorldReady) {
+				var now = SDate.Now();
+				tags["FarmName"] = FarmName();
+				tags["PlayerName"] = Game1.player.Name;
+				tags["Location"] = Game1.currentLocation.Name;
+
+				tags["Money"] = Game1.player.Money.ToString();
+				tags["MoneyCommas"] = Utility.getNumberWithCommas(Game1.player.Money);
+				tags["Level"] = Game1.player.Level.ToString();
+				tags["Title"] = Game1.player.getTitle();
+
+				{
+					var totalMinutes = Math.Floor(Game1.player.millisecondsPlayed / 60000.0);
+					var hours = Math.Floor(totalMinutes / 60);
+					var minutes = totalMinutes - hours * 60;
+					tags["TotalTime"] = $"{hours}:{minutes:00}";
+				}
+
+				tags["Health"] = Game1.player.health.ToString();
+				tags["MaxHealth"] = Game1.player.maxHealth.ToString();
+				tags["HealthPercent"] = Percent(Game1.player.health, Game1.player.maxHealth).ToString();
+				tags["Energy"] = Game1.player.Stamina.ToString();
+				tags["MaxEnergy"] = Game1.player.MaxStamina.ToString();
+				tags["EnergyPercent"] = Percent(Game1.player.Stamina, Game1.player.MaxStamina).ToString();
+
+				tags["Time"] = Game1.getTimeOfDayString(Game1.timeOfDay);
+				tags["Date"] = Utility.getDateString();
+				var season = now.Season.Substring(0, 1).ToUpper() + now.Season.Substring(1);
+				tags["Season"] = season;
+				tags["DayOfWeek"] = now.DayOfWeek.ToString();
+				tags["DayOfWeekShort"] = now.DayOfWeek.ToString().Substring(0, 3);
+				tags["Day"] = now.Day.ToString();
+				tags["DayPad"] = $"{now.Day:00}";
+				tags["Year"] = now.Year.ToString();
+
+				tags["Weather"] = WeatherName();
+				// Condition gives the same result as Weather,
+				// but will also give "Wedding Day" and "Festival"
+				tags["Condition"] = ConditionName();
+				tags["FarmType"] = FarmTypeName();
+
+				// GameVerb and GameNoun are meant to be used together
+				tags["GameVerb"] = "Playing";
+				tags["GameNoun"] = "Co-op";
+				if (!Context.IsMultiplayer)
+					tags["GameNoun"] = "Solo";
+				else if (Context.IsMainPlayer)
+					tags["GameVerb"] = "Hosting";
+			}
+
+			return Regex.Replace(text, @"{{([ \w\.\-]+)}}", match => {
+				string key = match.Groups[1].Value.Trim();
+				return tags.TryGetValue(key, out string value)
+					? value : match.Value;
+			});
+		}
+
+		private double Percent(double current, double max) {
+			return Math.Round(current / max * 100, 2);
 		}
 
 		private string FarmName() {
 			if (ShowFarmName())
 				return Game1.player.farmName.ToString() + " Farm";
-			else if (Context.IsMainPlayer && config.ShowCoop)
+			else if (Context.IsMainPlayer)
 				return "My Farm";
 			else
 				return "Someone's Farm";
 		}
 
 		private Boolean ShowFarmName() {
-			if (!config.ShowFarmName)
-				return false;
 			if (config.HideFarmNames.Contains("*"))
 				return false;
 			string name = Game1.player.farmName.ToString().ToLower() + " farm";
@@ -146,7 +231,7 @@ namespace SVRichPresence {
 		}
 
 		private string FarmTypeKey() {
-			if (!config.ShowFarmType)
+			if (!((GamePresence) Conf).ShowFarmType)
 				return "default";
 			switch (Game1.whichFarm) {
 				case Farm.default_layout:
@@ -164,6 +249,23 @@ namespace SVRichPresence {
 			}
 		}
 
+		private string FarmTypeName() {
+			switch (Game1.whichFarm) {
+				case Farm.default_layout:
+					return "Standard";
+				case Farm.riverlands_layout:
+					return "Riverland";
+				case Farm.forest_layout:
+					return "Forest";
+				case Farm.mountains_layout:
+					return "Hilltop";
+				case Farm.combat_layout:
+					return "Wilderness";
+				default:
+					return "Unknown";
+			}
+		}
+
 		private string WeatherKey() {
 			if (Game1.isRaining)
 				return Game1.isLightning ? "stormy" : "rainy";
@@ -176,6 +278,27 @@ namespace SVRichPresence {
 			if (Game1.isFestival())
 				return "festival";
 			return "sunny";
+		}
+
+		private string WeatherName() {
+			if (Game1.isRaining)
+				return Game1.isLightning ? "Stormy" : "Rainy";
+			if (Game1.isDebrisWeather)
+				return "Windy";
+			if (Game1.isSnowing)
+				return "Snowy";
+			return "Sunny";
+		}
+
+		private string ConditionName() {
+			var weather = WeatherName();
+			if (weather != "Sunny")
+				return weather;
+			if (Game1.weddingToday)
+				return "Wedding Day";
+			if (Game1.isFestival())
+				return "Festival";
+			return "Sunny";
 		}
 	}
 }
