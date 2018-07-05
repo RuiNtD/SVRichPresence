@@ -50,6 +50,23 @@ namespace SVRichPresence {
 					Monitor.Log("Result: " + text, LogLevel.Info);
 				}
 			);
+			Helper.ConsoleCommands.Add("DiscordRP_ListTags",
+				"List tags usable for config strings.",
+				(string command, string[] args) => {
+					var tags = GetTags();
+					int longest = 0;
+					foreach (var key in tags.Keys)
+						longest = Math.Max(longest, key.Length);
+					IList<string> output = new List<String>(tags.Count);
+					foreach (var pair in tags) {
+						var key = pair.Key;
+						var value = pair.Value;
+						var keyPad = key.PadLeft(longest);
+						output.Add("{{ " + keyPad + " }}: " + value);
+					}
+					Monitor.Log("Available Tags:\n" + String.Join("\n", output), LogLevel.Info);
+				}
+			);
 			LoadConfig();
 			InputEvents.ButtonReleased += HandleButton;
 			GameEvents.HalfSecondTick += DoUpdate;
