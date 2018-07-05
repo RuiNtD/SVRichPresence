@@ -143,16 +143,13 @@ namespace SVRichPresence {
 			return presence;
 		}
 
-		private string FormatText(string text) {
-			if (text.Length == 0)
-				return null;
-
+		private IDictionary<string, string> GetTags() {
 			int modCount = 0;
 			foreach (IManifest manifest in Helper.ModRegistry.GetAll())
 				modCount++;
 
-			// Code is copied and modified from SMAPI.
-			var tags = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase) {
+			IEqualityComparer<string> comp = StringComparer.InvariantCultureIgnoreCase;
+			IDictionary<string, string> tags = new Dictionary<string, string>(comp) {
 				["Activity"] = GamePresence,
 				["ModCount"] = modCount.ToString(),
 				["SMAPIVersion"] = Constants.ApiVersion.ToString(),
@@ -210,6 +207,15 @@ namespace SVRichPresence {
 					tags["GameVerb"] = "Hosting";
 			}
 
+			return tags;
+		}
+
+		private string FormatText(string text) {
+			if (text.Length == 0)
+				return null;
+
+			// Code is copied and modified from SMAPI.
+			var tags = GetTags();
 			return Regex.Replace(text, @"{{([ \w\.\-]+)}}", match => {
 				string key = match.Groups[1].Value.Trim();
 				return tags.TryGetValue(key, out string value)
