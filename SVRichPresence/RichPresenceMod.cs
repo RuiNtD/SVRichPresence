@@ -50,21 +50,22 @@ namespace SVRichPresence {
 					Monitor.Log("Result: " + text, LogLevel.Info);
 				}
 			);
-			Helper.ConsoleCommands.Add("DiscordRP_ListTags",
-				"List tags usable for config strings.",
+			Helper.ConsoleCommands.Add("DiscordRP_Tags",
+				"Lists tags usable for configuration strings.",
 				(string command, string[] args) => {
 					var tags = GetTags();
 					int longest = 0;
 					foreach (var key in tags.Keys)
 						longest = Math.Max(longest, key.Length);
-					IList<string> output = new List<String>(tags.Count);
+					IList<string> output = new List<String>(tags.Count + 1);
+					output.Add("Available Tags:");
 					foreach (var pair in tags) {
-						var key = pair.Key;
+						var key = "{{ " + pair.Key;
 						var value = pair.Value;
-						var keyPad = key.PadLeft(longest);
-						output.Add("{{ " + keyPad + " }}: " + value);
+						var keyPad = key.PadLeft(longest + 3);
+						output.Add(keyPad + " }}: " + value);
 					}
-					Monitor.Log("Available Tags:\n" + String.Join("\n", output), LogLevel.Info);
+					Monitor.Log(String.Join(Environment.NewLine, output), LogLevel.Info);
 				}
 			);
 			LoadConfig();
@@ -74,6 +75,8 @@ namespace SVRichPresence {
 			SaveEvents.AfterReturnToTitle += SetTimestamp;
 			SaveEvents.AfterLoad += (object sender, EventArgs e) =>
 				GamePresence = "Getting Started";
+			SaveEvents.AfterCreate += (object sender, EventArgs e) =>
+				GamePresence = "Starting a New Game";
 			GameEvents.FirstUpdateTick += (object sender, EventArgs e) => {
 				SetTimestamp();
 				timestampSession = GetTimestamp();
@@ -128,14 +131,16 @@ namespace SVRichPresence {
 
 		private DiscordRpc.RichPresence GetPresence() {
 			var presence = new DiscordRpc.RichPresence {
-				largeImageKey = "default_large",
 				details = FormatText(Conf.Details),
 				state = FormatText(Conf.State),
+				largeImageKey = "default_large",
 				largeImageText = FormatText(Conf.LargeImageText),
 				smallImageText = FormatText(Conf.SmallImageText)
 			};
 			if (Conf.ForceSmallImage)
 				presence.smallImageKey = "default_small";
+			if (presence.smallImageText != null)
+				presence.smallImageKey = presence.smallImageKey ?? "default_small";
 
 			if (Context.IsWorldReady) {
 				var conf = (GamePresence) Conf;
@@ -149,11 +154,10 @@ namespace SVRichPresence {
 					presence.partyId = Game1.MasterPlayer.UniqueMultiplayerID.ToString();
 					presence.partySize = Game1.numberOfPlayers();
 					presence.partyMax = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1;
+					presence.joinSecret = Game1.server.getInviteCode();
 				}
 			}
 			
-			if (presence.smallImageText != null)
-				presence.smallImageKey = presence.smallImageKey ?? "default_small";
 			if (config.ShowGlobalPlayTime)
 				presence.startTimestamp = timestampSession;
 
@@ -166,31 +170,39 @@ namespace SVRichPresence {
 				modCount++;
 
 			IEqualityComparer<string> comp = StringComparer.InvariantCultureIgnoreCase;
+			string none = Game1.content.LoadString("Strings\\UI:Character_none");
 			IDictionary<string, string> tags = new Dictionary<string, string>(comp) {
 				["Activity"] = GamePresence,
 				["ModCount"] = modCount.ToString(),
 				["SMAPIVersion"] = Constants.ApiVersion.ToString(),
-				["StardewVersion"] = Game1.version
-			};
+				["StardewVersion"] = Game1.version,
+				["Song"] = Utility.getSongTitleFromCueName(Game1.currentSong?.Name ?? none)
+		};
 
 			// All the tags below are only available while in a farm.
 			if (Context.IsWorldReady) {
 				var now = SDate.Now();
-				tags["FarmName"] = FarmName();
-				tags["PlayerName"] = Game1.player.Name;
+				tags["Name"] = Game1.player.Name;
+				tags["Farm"] = Game1.content.LoadString("Strings\\UI:Inventory_FarmName", Game1.player.farmName.ToString());
+				tags["FarmName"] = Game1.player.farmName.ToString();
+				tags["PetName"] = Game1.player.hasPet() ? Game1.player.getPetDisplayName() : none;
 				tags["Location"] = Game1.currentLocation.Name;
-
-				tags["Money"] = Game1.player.Money.ToString();
-				tags["MoneyCommas"] = Utility.getNumberWithCommas(Game1.player.Money);
-				tags["Level"] = Game1.player.Level.ToString();
-				tags["Title"] = Game1.player.getTitle();
+				tags["RomanticInterest"] = Utility.getTopRomanticInterest(Game1.player)?.getName() ?? none;
+				tags["PercentComplete"] = Utility.percentGameComplete().ToString();
 
 				{
-					var totalMinutes = Math.Floor(Game1.player.millisecondsPlayed / 60000.0);
-					var hours = Math.Floor(totalMinutes / 60);
-					var minutes = totalMinutes - hours * 60;
-					tags["TotalTime"] = $"{hours}:{minutes:00}";
+					// Copied from LoadGameMenu
+					string text = Game1.content.LoadString("Strings\\StringsFromCSFiles:LoadGameMenu.cs.11020", Utility.getNumberWithCommas(Game1.player.Money));
+					if (Game1.player.Money == 1 && LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.pt)
+						text = text.Substring(0, text.Length - 1);
+					tags["Money"] = text;
 				}
+				tags["MoneyNumber"] = Game1.player.Money.ToString();
+				tags["MoneyCommas"] = Utility.getNumberWithCommas(Game1.player.Money);
+				tags["Level"] = Game1.content.LoadString("String\\UI:Inventory_PortraitHover_Level", Game1.player.Level.ToString());
+				tags["LevelNumber"] = Game1.player.Level.ToString();
+				tags["Title"] = Game1.player.getTitle();
+				tags["TotalTime"] = Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed);
 
 				tags["Health"] = Game1.player.health.ToString();
 				tags["HealthMax"] = Game1.player.maxHealth.ToString();
@@ -201,27 +213,22 @@ namespace SVRichPresence {
 
 				tags["Time"] = Game1.getTimeOfDayString(Game1.timeOfDay);
 				tags["Date"] = Utility.getDateString();
-				var season = now.Season.Substring(0, 1).ToUpper() + now.Season.Substring(1);
-				tags["Season"] = season;
-				tags["DayOfWeek"] = now.DayOfWeek.ToString();
-				tags["DayOfWeekShort"] = now.DayOfWeek.ToString().Substring(0, 3);
+				tags["Season"] = Utility.getSeasonNameFromNumber(Utility.getSeasonNumber(now.Season));
+				tags["DayOfWeek"] = Game1.shortDayDisplayNameFromDayOfSeason(now.Day);
+
 				tags["Day"] = now.Day.ToString();
 				tags["DayPad"] = $"{now.Day:00}";
+				tags["DaySuffix"] = Utility.getNumberEnding(now.Day);
 				tags["Year"] = now.Year.ToString();
-
-				tags["Weather"] = WeatherName();
-				// Condition gives the same result as Weather,
-				// but will also give "Wedding Day" and "Festival"
-				tags["Condition"] = ConditionName();
-				tags["FarmType"] = FarmTypeName();
-
-				// GameVerb and GameNoun are meant to be used together
+				tags["YearSuffix"] = Utility.getNumberEnding(now.Year);
+				
 				tags["GameVerb"] = "Playing";
 				tags["GameNoun"] = "Co-op";
 				if (!Context.IsMultiplayer)
 					tags["GameNoun"] = "Solo";
 				else if (Context.IsMainPlayer)
 					tags["GameVerb"] = "Hosting";
+				tags["GameInfo"] = tags["GameVerb"] + " " + tags["GameNoun"];
 			}
 
 			return tags;
@@ -244,25 +251,6 @@ namespace SVRichPresence {
 			return Math.Round(current / max * 100, 2);
 		}
 
-		private string FarmName() {
-			if (ShowFarmName())
-				return Game1.player.farmName.ToString() + " Farm";
-			else if (Context.IsMainPlayer)
-				return "My Farm";
-			else
-				return "Someone's Farm";
-		}
-
-		private Boolean ShowFarmName() {
-			if (config.HideFarmNames.Contains("*"))
-				return false;
-			string name = Game1.player.farmName.ToString().ToLower() + " farm";
-			foreach (string entry in config.HideFarmNames)
-				if (name.Contains(entry.ToLower()))
-					return false;
-			return true;
-		}
-
 		private string FarmTypeKey() {
 			if (!((GamePresence) Conf).ShowFarmType)
 				return "default";
@@ -282,23 +270,6 @@ namespace SVRichPresence {
 			}
 		}
 
-		private string FarmTypeName() {
-			switch (Game1.whichFarm) {
-				case Farm.default_layout:
-					return "Standard";
-				case Farm.riverlands_layout:
-					return "Riverland";
-				case Farm.forest_layout:
-					return "Forest";
-				case Farm.mountains_layout:
-					return "Hilltop";
-				case Farm.combat_layout:
-					return "Wilderness";
-				default:
-					return "Unknown";
-			}
-		}
-
 		private string WeatherKey() {
 			if (Game1.isRaining)
 				return Game1.isLightning ? "stormy" : "rainy";
@@ -311,27 +282,6 @@ namespace SVRichPresence {
 			if (Game1.isFestival())
 				return "festival";
 			return "sunny";
-		}
-
-		private string WeatherName() {
-			if (Game1.isRaining)
-				return Game1.isLightning ? "Stormy" : "Rainy";
-			if (Game1.isDebrisWeather)
-				return "Windy";
-			if (Game1.isSnowing)
-				return "Snowy";
-			return "Sunny";
-		}
-
-		private string ConditionName() {
-			var weather = WeatherName();
-			if (weather != "Sunny")
-				return weather;
-			if (Game1.weddingToday)
-				return "Wedding Day";
-			if (Game1.isFestival())
-				return "Festival";
-			return "Sunny";
 		}
 	}
 }
