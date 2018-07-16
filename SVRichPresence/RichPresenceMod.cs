@@ -199,7 +199,7 @@ namespace SVRichPresence {
 				}
 				tags["MoneyNumber"] = Game1.player.Money.ToString();
 				tags["MoneyCommas"] = Utility.getNumberWithCommas(Game1.player.Money);
-				tags["Level"] = Game1.content.LoadString("String\\UI:Inventory_PortraitHover_Level", Game1.player.Level.ToString());
+				tags["Level"] = Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", Game1.player.Level.ToString());
 				tags["LevelNumber"] = Game1.player.Level.ToString();
 				tags["Title"] = Game1.player.getTitle();
 				tags["TotalTime"] = Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed);
