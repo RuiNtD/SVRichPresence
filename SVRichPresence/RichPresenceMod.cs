@@ -34,7 +34,7 @@ namespace SVRichPresence {
 				Monitor.Log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", LogLevel.Alert);
 			}
 #endif
-			var handlers = new DiscordRpc.EventHandlers();
+			DiscordRpc.EventHandlers handlers = new DiscordRpc.EventHandlers();
 			DiscordRpc.Initialize(applicationId, ref handlers, false, "413150");
 			Helper.ConsoleCommands.Add("DiscordRP_Reload",
 				"Reloads the config for Discord Rich Presence.",
@@ -46,23 +46,23 @@ namespace SVRichPresence {
 			Helper.ConsoleCommands.Add("DiscordRP_Format",
 				"Formats and prints a provided configuration string.",
 				(string command, string[] args) => {
-					var text = FormatText(String.Join(" ", args));
+					string text = FormatText(String.Join(" ", args));
 					Monitor.Log("Result: " + text, LogLevel.Info);
 				}
 			);
 			Helper.ConsoleCommands.Add("DiscordRP_Tags",
 				"Lists tags usable for configuration strings.",
 				(string command, string[] args) => {
-					var tags = GetTags();
+					IDictionary<string, string> tags = GetTags();
 					int longest = 0;
-					foreach (var key in tags.Keys)
+					foreach (string key in tags.Keys)
 						longest = Math.Max(longest, key.Length);
 					IList<string> output = new List<String>(tags.Count + 1);
 					output.Add("Available Tags:");
-					foreach (var pair in tags) {
-						var key = "{{ " + pair.Key;
-						var value = pair.Value;
-						var keyPad = key.PadLeft(longest + 3);
+					foreach (KeyValuePair<string, string> pair in tags) {
+						string key = "{{ " + pair.Key;
+						string value = pair.Value;
+						string keyPad = key.PadLeft(longest + 3);
 						output.Add(keyPad + " }}: " + value);
 					}
 					Monitor.Log(String.Join(Environment.NewLine, output), LogLevel.Info);
@@ -117,7 +117,7 @@ namespace SVRichPresence {
 			timestampFarm = GetTimestamp();
 
 		private long GetTimestamp() {
-			var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+			DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 			return Convert.ToInt64((DateTime.UtcNow - epoch).TotalSeconds);
 		}
 
@@ -130,7 +130,7 @@ namespace SVRichPresence {
 		}
 
 		private DiscordRpc.RichPresence GetPresence() {
-			var presence = new DiscordRpc.RichPresence {
+			DiscordRpc.RichPresence presence = new DiscordRpc.RichPresence {
 				details = FormatText(Conf.Details),
 				state = FormatText(Conf.State),
 				largeImageKey = "default_large",
@@ -143,7 +143,7 @@ namespace SVRichPresence {
 				presence.smallImageKey = presence.smallImageKey ?? "default_small";
 
 			if (Context.IsWorldReady) {
-				var conf = (GamePresence) Conf;
+				GamePresence conf = (GamePresence) Conf;
 				if (conf.ShowSeason)
 					presence.largeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}";
 				if (conf.ShowWeather)
@@ -181,7 +181,7 @@ namespace SVRichPresence {
 
 			// All the tags below are only available while in a farm.
 			if (Context.IsWorldReady) {
-				var now = SDate.Now();
+				SDate now = SDate.Now();
 				tags["Name"] = Game1.player.Name;
 				tags["Farm"] = Game1.content.LoadString("Strings\\UI:Inventory_FarmName", Game1.player.farmName.ToString());
 				tags["FarmName"] = Game1.player.farmName.ToString();
@@ -239,7 +239,7 @@ namespace SVRichPresence {
 				return null;
 
 			// Code is copied and modified from SMAPI.
-			var tags = GetTags();
+			IDictionary<string, string> tags = GetTags();
 			return Regex.Replace(text, @"{{([ \w\.\-]+)}}", match => {
 				string key = match.Groups[1].Value.Trim();
 				return tags.TryGetValue(key, out string value)
