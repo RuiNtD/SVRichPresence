@@ -2,10 +2,6 @@
 library from this mod's folder to the Stardew Valley folder. It is recommended
 you do this every time you update the mod, but may not be required.
 
-Please note that the mod is mostly untested on platforms other than Windows 10.
-I have gotten the mod to work on Mac but had no luck on Linux. However, these
-steps are required for the mod to have ANY change of working on Mac and Linux.
-
 1. Install this mod like you would install any other Stardew Valley mod.
 2. Locate and copy (or cut) this file from the mod's folder:
 	a. For Mac: libdiscord-rpc.dylib
@@ -17,3 +13,12 @@ steps are required for the mod to have ANY change of working on Mac and Linux.
 	d. If on Mac, open Contents then MacOS to go to the game's folder.
 4. Paste the copied file into the game's folder.
 5. Start the game and hope it works.
+
+===== Linux Troubleshooting =====
+
+If you are on Linux and can't get Rich Presence to work, make sure you download
+Discord from the official website (discordapp.com). Rich presence WILL NOT WORK
+if Discord was downloaded from Ubuntu Software Centre! This is because Discord
+on the Ubuntu Software Centre is packaged as a "snap app," which is sandboxed,
+meaning other apps can't access it. While that's great for security, it will
+prevent other applications from accessing Discord's rich presence functions.
