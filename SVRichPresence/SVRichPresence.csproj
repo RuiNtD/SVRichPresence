@@ -48,7 +48,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DiscordRpc.cs" />
+    <Compile Include="IRichPresenceAPI.cs" />
     <Compile Include="ModConfig.cs" />
+    <Compile Include="RichPresenceAPI.cs" />
     <Compile Include="RichPresenceMod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
