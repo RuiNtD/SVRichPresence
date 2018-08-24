@@ -61,7 +61,9 @@
     <Content Include="libdiscord-rpc.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Mac and Linux Install Instructions.txt" />
+    <Content Include="Mac and Linux Install Instructions.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="manifest.json" />
     <None Include="packages.config" />
   </ItemGroup>
