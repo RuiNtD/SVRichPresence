@@ -4,6 +4,7 @@ using StardewModdingAPI.Utilities;
 using StardewValley;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace SVRichPresence {
@@ -165,9 +166,7 @@ namespace SVRichPresence {
 		}
 
 		private IDictionary<string, string> GetTags() {
-			int modCount = 0;
-			foreach (IManifest manifest in Helper.ModRegistry.GetAll())
-				modCount++;
+			int modCount = Helper.ModRegistry.GetAll().Count();
 
 			IEqualityComparer<string> comp = StringComparer.InvariantCultureIgnoreCase;
 			string none = Game1.content.LoadString("Strings\\UI:Character_none");
@@ -177,7 +176,7 @@ namespace SVRichPresence {
 				["SMAPIVersion"] = Constants.ApiVersion.ToString(),
 				["StardewVersion"] = Game1.version,
 				["Song"] = Utility.getSongTitleFromCueName(Game1.currentSong?.Name ?? none)
-		};
+			};
 
 			// All the tags below are only available while in a farm.
 			if (Context.IsWorldReady) {
