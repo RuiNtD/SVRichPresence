@@ -11,6 +11,7 @@ namespace SVRichPresence {
 		private const string applicationId = "444517509148966923";
 		private ModConfig config = new ModConfig();
 		private IRichPresenceAPI api;
+		private DiscordRpc.EventHandlers handlers = new DiscordRpc.EventHandlers();
 
 		public override void Entry(IModHelper helper) {
 #if DEBUG
@@ -36,7 +37,12 @@ namespace SVRichPresence {
 			}
 #endif
 			api = new RichPresenceAPI(this);
-			DiscordRpc.EventHandlers handlers = new DiscordRpc.EventHandlers();
+			handlers.readyCallback = ReadyCallback;
+			handlers.disconnectedCallback += DisconnectedCallback;
+			handlers.errorCallback += ErrorCallback;
+			handlers.joinCallback += JoinCallback;
+			handlers.spectateCallback += SpectateCallback;
+			handlers.requestCallback += RequestCallback;
 			DiscordRpc.Initialize(applicationId, ref handlers, false, "413150");
 			Helper.ConsoleCommands.Add("DiscordRP_Reload",
 				"Reloads the config for Discord Rich Presence.",
@@ -100,6 +106,9 @@ namespace SVRichPresence {
 			);
 			LoadConfig();
 			InputEvents.ButtonReleased += HandleButton;
+			GameEvents.UpdateTick += (object sender, EventArgs e) => {
+				DiscordRpc.RunCallbacks();
+			};
 			GameEvents.HalfSecondTick += DoUpdate;
 			SaveEvents.AfterLoad += SetTimestamp;
 			SaveEvents.AfterReturnToTitle += SetTimestamp;
@@ -113,7 +122,7 @@ namespace SVRichPresence {
 			};
 
 			ITagRegister tagReg = api.GetTagRegister(this);
-			
+
 			tagReg.SetTag("Activity", () => api.GamePresence);
 			tagReg.SetTag("ModCount", () => Helper.ModRegistry.GetAll().Count());
 			tagReg.SetTag("SMAPIVersion", () => Constants.ApiVersion.ToString());
@@ -166,6 +175,35 @@ namespace SVRichPresence {
 				Context.IsMultiplayer && Context.IsMainPlayer ? "Hosting" : "Playing", true);
 			tagReg.SetTag("GameNoun", () => Context.IsMultiplayer ? "Co-op" : "Solo", true);
 			tagReg.SetTag("GameInfo", () => api.GetTag("GameVerb") + " " + api.GetTag("GameNoun"), true);
+		}
+
+		public void ReadyCallback(ref DiscordRpc.DiscordUser user) {
+			Monitor.Log(string.Format("Discord: connected to {0}#{1}: {2}", user.username, user.discriminator, user.userId));
+		}
+
+		public void DisconnectedCallback(int errorCode, string message) {
+			Monitor.Log(string.Format("Discord: disconnect {0}: {1}", errorCode, message));
+		}
+
+		public void ErrorCallback(int errorCode, string message) {
+			Monitor.Log(string.Format("Discord: error {0}: {1}", errorCode, message));
+		}
+
+		public void JoinCallback(string secret) {
+			Monitor.Log(string.Format("Discord: join ({0})", secret));
+		}
+
+		public void SpectateCallback(string secret) {
+			Monitor.Log(string.Format("Discord: spectate ({0})", secret));
+		}
+
+		public void RequestCallback(ref DiscordRpc.DiscordUser user) {
+			Monitor.Log(string.Format("Discord: join request {0}#{1}: {2}", user.username, user.discriminator, user.userId));
+		}
+
+		protected override void Dispose(bool disposing) {
+			Monitor.Log("Discord: shutdown");
+			DiscordRpc.Shutdown();
 		}
 
 		public override object GetApi() => api;
