@@ -122,7 +122,7 @@ namespace SVRichPresence {
 			};
 
 			ITagRegister tagReg = api.GetTagRegister(this);
-
+			
 			tagReg.SetTag("Activity", () => api.GamePresence);
 			tagReg.SetTag("ModCount", () => Helper.ModRegistry.GetAll().Count());
 			tagReg.SetTag("SMAPIVersion", () => Constants.ApiVersion.ToString());
