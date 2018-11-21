@@ -83,7 +83,7 @@ namespace SVRichPresence {
 						string head = group.Value.Count + " tag";
 						if (group.Value.Count != 1)
 							head += "s";
-						head += " from " + (Helper.ModRegistry.Get(group.Key)?.Name ?? "an unknown mod");
+						head += " from " + (Helper.ModRegistry.Get(group.Key)?.Manifest.Name ?? "an unknown mod");
 						output.Add(head);
 						longest = 0;
 						foreach (KeyValuePair<string, string> tag in group.Value)
