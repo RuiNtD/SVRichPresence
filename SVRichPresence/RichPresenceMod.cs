@@ -101,15 +101,15 @@ namespace SVRichPresence {
 				}
 			);
 			LoadConfig();
-			InputEvents.ButtonReleased += HandleButton;
-			GameEvents.HalfSecondTick += DoUpdate;
-			SaveEvents.AfterLoad += SetTimestamp;
-			SaveEvents.AfterReturnToTitle += SetTimestamp;
-			SaveEvents.AfterLoad += (object sender, EventArgs e) =>
+			Helper.Events.Input.ButtonReleased += HandleButton;
+			Helper.Events.GameLoop.UpdateTicked += DoUpdate;
+			Helper.Events.GameLoop.SaveLoaded += SetTimestamp;
+			Helper.Events.GameLoop.ReturnedToTitle += SetTimestamp;
+			Helper.Events.GameLoop.SaveLoaded += (object sender, SaveLoadedEventArgs e) =>
 				api.GamePresence = "Getting Started";
-			SaveEvents.AfterCreate += (object sender, EventArgs e) =>
+			Helper.Events.GameLoop.SaveCreated += (object sender, SaveCreatedEventArgs e) =>
 				api.GamePresence = "Starting a New Game";
-			GameEvents.FirstUpdateTick += (object sender, EventArgs e) => {
+			Helper.Events.GameLoop.GameLaunched += (object sender, GameLaunchedEventArgs e) => {
 				SetTimestamp();
 				timestampSession = GetTimestamp();
 			};
@@ -193,7 +193,7 @@ namespace SVRichPresence {
 					File.Copy(modPath, sdvPath, true);
 					File.SetLastWriteTime(sdvPath, File.GetLastWriteTime(modPath)); // just making sure
 					Monitor.Log("DiscordRP library updated. Please restart game.", LogLevel.Alert);
-					SaveEvents.AfterLoad += (object sender, EventArgs e) => {
+					Helper.Events.GameLoop.SaveLoaded += (object sender, SaveLoadedEventArgs e) => {
 						Game1.addHUDMessage(new HUDMessage("DiscordRP library updated. Please restart game.", HUDMessage.newQuest_type));
 					};
 				}
@@ -205,7 +205,7 @@ namespace SVRichPresence {
 			}
 		}
 
-		private void HandleButton(object sender, EventArgsInput e) {
+		private void HandleButton(object sender, ButtonReleasedEventArgs e) {
 			if (e.Button != config.ReloadConfigButton)
 				return;
 			try {
@@ -230,8 +230,10 @@ namespace SVRichPresence {
 			return Convert.ToInt64((DateTime.UtcNow - epoch).TotalSeconds);
 		}
 
-		private void DoUpdate(object sender, EventArgs e) =>
-			DiscordRpc.UpdatePresence(GetPresence());
+		private void DoUpdate(object sender, UpdateTickedEventArgs e) {
+			if (e.IsMultipleOf(30))
+				DiscordRpc.UpdatePresence(GetPresence());
+		}
 
 		private MenuPresence Conf => !Context.IsWorldReady ?
 			config.MenuPresence : config.GamePresence;
