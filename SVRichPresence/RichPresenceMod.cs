@@ -257,12 +257,13 @@ namespace SVRichPresence {
 					presence.smallImageKey = "weather_" + WeatherKey();
 				if (conf.ShowPlayTime)
 					presence.startTimestamp = timestampFarm;
-				if (Context.IsMultiplayer && conf.ShowPlayerCount) {
-					presence.partyId = Game1.MasterPlayer.UniqueMultiplayerID.ToString();
-					presence.partySize = Game1.numberOfPlayers();
-					presence.partyMax = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1;
-					presence.joinSecret = Game1.server.getInviteCode();
-				}
+				if (Context.IsMultiplayer && conf.ShowPlayerCount)
+					try {
+						presence.partyId = Game1.MasterPlayer.UniqueMultiplayerID.ToString();
+						presence.partySize = Game1.numberOfPlayers();
+						presence.partyMax = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1;
+						presence.joinSecret = Game1.server.getInviteCode();
+					} finally { }
 			}
 
 			if (config.ShowGlobalPlayTime)
