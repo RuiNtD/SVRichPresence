@@ -265,7 +265,7 @@ namespace SVRichPresence {
 						presence.partySize = Game1.numberOfPlayers();
 						presence.partyMax = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1;
 						presence.joinSecret = Game1.server.getInviteCode();
-					} finally { }
+					} catch { }
 			}
 
 			if (config.ShowGlobalPlayTime)
