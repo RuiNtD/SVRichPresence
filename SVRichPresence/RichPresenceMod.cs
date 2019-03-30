@@ -41,34 +41,38 @@ namespace SVRichPresence {
 #endif
 			api = new RichPresenceAPI(this);
 
-            client = new DiscordRpcClient(applicationId);
+			client = new DiscordRpcClient(applicationId) {
+				Logger = new RPLogger(Monitor) {
+					Level = DiscordRPC.Logging.LogLevel.Trace
+				}
+			};
 			client.OnReady += (sender, e) => {
 				Monitor.Log("Connected to Discord: " + e.User, LogLevel.Info);
 			};
 			client.OnJoin += (sender, e) => {
-				object lobbyFromInviteCode = Program.sdk.Networking.GetLobbyFromInviteCode(e.Secret);
-				if (lobbyFromInviteCode == null)
-					return;
-				Game1.ExitToTitle(() => {
-					TitleMenu.subMenu = new FarmhandMenu(Program.sdk.Networking.CreateClient(lobbyFromInviteCode));
-				});
+				Monitor.Log("Attempting to join user", LogLevel.Info);
+				JoinGame(e.Secret);
+			};
+			client.OnJoinRequested += (sender, e) => {
+				Monitor.Log(e.User + " has requested to join your game.", LogLevel.Alert);
+				Monitor.Log("You can respond to this request in Discord Overlay.", LogLevel.Info);
+				Game1.chatBox.addInfoMessage(e.User + " is requesting to join your game. You can respond to this request in Discord Overlay.");
+				client.Respond(e, true);
+			};
+			client.OnClose += (sender, e) => {
+				Monitor.Log("Connection with Discord lost.", LogLevel.Info);
 			};
 			client.RegisterUriScheme();
 			client.Subscribe(EventType.JoinRequest);
 			client.Subscribe(EventType.Join);
 			client.Initialize();
 
-			/*Helper.ConsoleCommands.Add("DiscordRP_TestJoin",
+			Helper.ConsoleCommands.Add("DiscordRP_TestJoin",
 				"Command for debugging.",
 				(string command, string[] args) => {
-					object lobbyFromInviteCode = Program.sdk.Networking.GetLobbyFromInviteCode(string.Join(" ", args));
-					if (lobbyFromInviteCode == null)
-						return;
-					Game1.ExitToTitle(() => {
-						TitleMenu.subMenu = new FarmhandMenu(Program.sdk.Networking.CreateClient(lobbyFromInviteCode));
-					});
+					JoinGame(string.Join(" ", args));
 				}
-			);*/
+			);
 			Helper.ConsoleCommands.Add("DiscordRP_Reload",
 				"Reloads the config for Discord Rich Presence.",
 				(string command, string[] args) => {
@@ -198,6 +202,14 @@ namespace SVRichPresence {
 				Context.IsMultiplayer && Context.IsMainPlayer ? "Hosting" : "Playing", true);
 			tagReg.SetTag("GameNoun", () => Context.IsMultiplayer ? "Co-op" : "Solo", true);
 			tagReg.SetTag("GameInfo", () => api.GetTag("GameVerb") + " " + api.GetTag("GameNoun"), true);
+		}
+
+		private void JoinGame(string inviteCode) {
+			object lobby = Program.sdk.Networking.GetLobbyFromInviteCode(inviteCode);
+			if (lobby == null) return;
+			Game1.ExitToTitle(() => {
+				TitleMenu.subMenu = new FarmhandMenu(Program.sdk.Networking.CreateClient(lobby));
+			});
 		}
 
 		public override object GetApi() => api;
