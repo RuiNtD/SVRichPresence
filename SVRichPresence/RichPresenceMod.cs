@@ -39,33 +39,38 @@ namespace SVRichPresence {
 				Monitor.Log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", LogLevel.Alert);
 			}
 #endif
-			api = new RichPresenceAPI(this);
 
-			client = new DiscordRpcClient(applicationId) {
-				Logger = new RPLogger(Monitor) {
-					Level = DiscordRPC.Logging.LogLevel.Trace
-				}
-			};
+			api = new RichPresenceAPI(this);
+			client = new DiscordRpcClient(applicationId,
+				logger: new RPLogger(Monitor, DiscordRPC.Logging.LogLevel.Warning),
+				autoEvents: false,
+				client: new DiscordRPC.IO.ManagedNamedPipeClient()
+			);
+
 			client.OnReady += (sender, e) => {
 				Monitor.Log("Connected to Discord: " + e.User, LogLevel.Info);
 			};
+			client.OnClose += (sender, e) => {
+				Monitor.Log("Lost connection: " + e.Reason, LogLevel.Warn);
+			};
+			client.OnError += (sender, e) => {
+				Monitor.Log("Discord error: " + e.Message, LogLevel.Error);
+			};
+
 			client.OnJoin += (sender, e) => {
-				Monitor.Log("Attempting to join user", LogLevel.Info);
+				Monitor.Log("Attempting to join game", LogLevel.Info);
 				JoinGame(e.Secret);
 			};
 			client.OnJoinRequested += (sender, e) => {
-				Monitor.Log(e.User + " has requested to join your game.", LogLevel.Alert);
+				Monitor.Log(e.User + " is requesting to join your game.", LogLevel.Alert);
 				Monitor.Log("You can respond to this request in Discord Overlay.", LogLevel.Info);
 				Game1.chatBox.addInfoMessage(e.User + " is requesting to join your game. You can respond to this request in Discord Overlay.");
-				client.Respond(e, true);
 			};
-			client.OnClose += (sender, e) => {
-				Monitor.Log("Connection with Discord lost.", LogLevel.Info);
-			};
-			client.RegisterUriScheme();
-			client.Subscribe(EventType.JoinRequest);
-			client.Subscribe(EventType.Join);
+
 			client.Initialize();
+			client.RegisterUriScheme();
+			client.Subscribe(EventType.Join);
+			client.Subscribe(EventType.JoinRequest);
 
 			Helper.ConsoleCommands.Add("DiscordRP_TestJoin",
 				"Command for debugging.",
@@ -235,7 +240,7 @@ namespace SVRichPresence {
 		private void SetTimestamp() => timestampFarm = DateTime.UtcNow;
 
 		private void DoUpdate(object sender, UpdateTickedEventArgs e) {
-			//client.Invoke();
+			client.Invoke();
 			if (e.IsMultipleOf(30))
 				client.SetPresence(GetPresence());
 		}

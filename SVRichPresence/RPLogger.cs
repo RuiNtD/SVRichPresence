@@ -9,13 +9,17 @@ using LogLevel = DiscordRPC.Logging.LogLevel;
 
 namespace SVRichPresence {
 	class RPLogger : ILogger {
+		private readonly IMonitor Monitor;
 		public LogLevel Level { get; set; }
 
-		private readonly IMonitor Monitor;
-
 		public RPLogger(IMonitor monitor) {
-			Level = LogLevel.Info;
 			Monitor = monitor;
+			Level = LogLevel.Info;
+		}
+
+		public RPLogger(IMonitor monitor, LogLevel level) {
+			Monitor = monitor;
+			Level = level;
 		}
 
 		public void Trace(string message, params object[] args) {
