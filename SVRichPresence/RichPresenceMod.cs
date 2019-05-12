@@ -6,7 +6,9 @@ using StardewValley;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using Constants = StardewModdingAPI.Constants;
 using LogLevel = StardewModdingAPI.LogLevel;
 using Utility = StardewValley.Utility;
@@ -43,6 +45,17 @@ namespace SVRichPresence {
 				Monitor.Log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", LogLevel.Alert);
 			}
 #endif
+
+			AppDomain.CurrentDomain.AssemblyResolve += (object sender, ResolveEventArgs e) => {
+				try {
+					var name = new AssemblyName(e.Name);
+					foreach (FileInfo dll in new DirectoryInfo(Helper.DirectoryPath).EnumerateFiles("*.dll")) {
+						if (name.Name.Equals(AssemblyName.GetAssemblyName(dll.FullName).Name, StringComparison.InvariantCultureIgnoreCase))
+							return Assembly.LoadFrom(dll.FullName);
+					}
+				} catch { }
+				return null;
+			};
 
 			api = new RichPresenceAPI(this);
 			try {
