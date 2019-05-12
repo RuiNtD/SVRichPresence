@@ -47,13 +47,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Discord\ActivityManager.cs" />
-    <Compile Include="Discord\Constants.cs" />
-    <Compile Include="Discord\Core.cs" />
-    <Compile Include="Discord\ImageManager.cs" />
-    <Compile Include="Discord\LobbyManager.cs" />
-    <Compile Include="Discord\StorageManager.cs" />
-    <Compile Include="Discord\StoreManager.cs" />
+    <Compile Include="DiscordGameSDK\ActivityManager.cs" />
+    <Compile Include="DiscordGameSDK\Constants.cs" />
+    <Compile Include="DiscordGameSDK\Core.cs" />
+    <Compile Include="DiscordGameSDK\ImageManager.cs" />
+    <Compile Include="DiscordGameSDK\LobbyManager.cs" />
+    <Compile Include="DiscordGameSDK\StorageManager.cs" />
+    <Compile Include="DiscordGameSDK\StoreManager.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IRichPresenceAPI.cs" />
     <Compile Include="ModConfig.cs" />
