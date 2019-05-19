@@ -6,17 +6,17 @@ using StardewValley;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace SVRichPresence {
 	public class RichPresenceMod : Mod {
-		private const string applicationId = "444517509148966923";
+		private const string clientId = "444517509148966923";
+		private const string steamId = "413150";
 		private ModConfig config = new ModConfig();
 		private IRichPresenceAPI api;
-        private DiscordRpcClient client;
+		private DiscordRpcClient client;
 
-        public override void Entry(IModHelper helper) {
+		public override void Entry(IModHelper helper) {
 #if DEBUG
 			Monitor.Log("THIS IS A DEBUG BUILD...", LogLevel.Alert);
 			Monitor.Log("...FOR DEBUGGING...", LogLevel.Alert);
@@ -41,7 +41,7 @@ namespace SVRichPresence {
 #endif
 
 			api = new RichPresenceAPI(this);
-			client = new DiscordRpcClient(applicationId,
+			client = new DiscordRpcClient(clientId,
 				logger: new RPLogger(Monitor, DiscordRPC.Logging.LogLevel.Warning),
 				autoEvents: false,
 				client: new DiscordRPC.IO.ManagedNamedPipeClient()
@@ -68,7 +68,7 @@ namespace SVRichPresence {
 			};
 
 			client.Initialize();
-			client.RegisterUriScheme();
+			client.RegisterUriScheme(steamAppID: steamId);
 			client.Subscribe(EventType.Join);
 			client.Subscribe(EventType.JoinRequest);
 
@@ -118,7 +118,7 @@ namespace SVRichPresence {
 						if (tag.Value is null) nulls++;
 						else output.Add("  {{ " + tag.Key.PadLeft(longest) + " }}: " + tag.Value);
 					foreach (KeyValuePair<string, IDictionary<string, string>> group in groups) {
-						if (group.Key == this.ModManifest.UniqueID)
+						if (group.Key == ModManifest.UniqueID)
 							continue;
 						string head = group.Value.Count + " tag";
 						if (group.Value.Count != 1)
@@ -154,7 +154,7 @@ namespace SVRichPresence {
 			};
 
 			ITagRegister tagReg = api.GetTagRegister(this);
-			
+
 			tagReg.SetTag("Activity", () => api.GamePresence);
 			tagReg.SetTag("ModCount", () => Helper.ModRegistry.GetAll().Count());
 			tagReg.SetTag("SMAPIVersion", () => Constants.ApiVersion.ToString());
@@ -187,10 +187,10 @@ namespace SVRichPresence {
 
 			tagReg.SetTag("Health", () => Game1.player.health, true);
 			tagReg.SetTag("HealthMax", () => Game1.player.maxHealth, true);
-			tagReg.SetTag("HealthPercent", () => (double) Game1.player.health / Game1.player.maxHealth * 100, 2, true);
+			tagReg.SetTag("HealthPercent", () => (double)Game1.player.health / Game1.player.maxHealth * 100, 2, true);
 			tagReg.SetTag("Energy", () => Game1.player.Stamina.ToString(), true);
 			tagReg.SetTag("EnergyMax", () => Game1.player.MaxStamina, true);
-			tagReg.SetTag("EnergyPercent", () => (double) Game1.player.Stamina / Game1.player.MaxStamina * 100, 2, true);
+			tagReg.SetTag("EnergyPercent", () => (double)Game1.player.Stamina / Game1.player.MaxStamina * 100, 2, true);
 
 			tagReg.SetTag("Time", () => Game1.getTimeOfDayString(Game1.timeOfDay), true);
 			tagReg.SetTag("Date", () => Utility.getDateString(), true);
@@ -249,54 +249,43 @@ namespace SVRichPresence {
 			config.MenuPresence : config.GamePresence;
 
 		private RichPresence GetPresence() {
-			RichPresence presence = new RichPresence {
+			var presence = new RichPresence {
 				Details = api.FormatText(Conf.Details),
-				State = api.FormatText(Conf.State)
+				State = api.FormatText(Conf.State),
+				Assets = new Assets {
+					LargeImageKey = "default_large",
+					LargeImageText = api.FormatText(Conf.LargeImageText),
+					SmallImageText = api.FormatText(Conf.SmallImageText)
+				}
 			};
-			Assets assets = new Assets {
-				LargeImageKey = "default_large",
-				LargeImageText = api.FormatText(Conf.LargeImageText),
-				SmallImageText = api.FormatText(Conf.SmallImageText)
-			};
-			if (Conf.ForceSmallImage)
-				assets.SmallImageKey = "default_small";
-			if (assets.SmallImageText != null)
-				assets.SmallImageKey = assets.SmallImageKey ?? "default_small";
+			if (Conf.ForceSmallImage || presence.Assets.SmallImageText?.Length > 0)
+				presence.Assets.SmallImageKey = "default_small";
 
 			if (Context.IsWorldReady) {
-				GamePresence conf = (GamePresence) Conf;
+				var conf = (GamePresence)Conf;
 				if (conf.ShowSeason)
-					assets.LargeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}";
+					presence.Assets.LargeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}";
 				if (conf.ShowWeather)
-					assets.SmallImageKey = "weather_" + WeatherKey();
+					presence.Assets.SmallImageKey = "weather_" + WeatherKey();
 				if (conf.ShowPlayTime)
-					presence.Timestamps = new Timestamps {
-						Start = timestampFarm
-					};
-				if (Context.IsMultiplayer && conf.ShowPlayerCount)
+					presence.Timestamps.Start = timestampFarm;
+				if (Context.IsMultiplayer && conf.AllowAskToJoin)
 					try {
-						presence.Party = new Party {
-							ID = Game1.MasterPlayer.UniqueMultiplayerID.ToString(),
-							Size = Game1.numberOfPlayers(),
-							Max = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1
-						};
-						presence.Secrets = new Secrets {
-							JoinSecret = Game1.server.getInviteCode()
-						};
+						presence.Party.ID = Game1.MasterPlayer.UniqueMultiplayerID.ToString();
+						presence.Party.Size = Game1.numberOfPlayers();
+						presence.Party.Max = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1;
+						presence.Secrets.JoinSecret = Game1.server.getInviteCode();
 					} catch { }
 			}
-			
+
 			if (config.ShowGlobalPlayTime)
-				presence.Timestamps = new Timestamps {
-					Start = timestampSession
-				};
-			presence.Assets = assets;
+				presence.Timestamps.Start = timestampSession;
 
 			return presence;
 		}
 
 		private string FarmTypeKey() {
-			if (!((GamePresence) Conf).ShowFarmType)
+			if (!((GamePresence)Conf).ShowFarmType)
 				return "default";
 			switch (Game1.whichFarm) {
 				case Farm.default_layout:

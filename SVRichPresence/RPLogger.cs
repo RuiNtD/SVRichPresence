@@ -1,14 +1,9 @@
 ﻿using DiscordRPC.Logging;
 using StardewModdingAPI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using LogLevel = DiscordRPC.Logging.LogLevel;
 
 namespace SVRichPresence {
-	class RPLogger : ILogger {
+	internal class RPLogger : ILogger {
 		private readonly IMonitor Monitor;
 		public LogLevel Level { get; set; }
 
