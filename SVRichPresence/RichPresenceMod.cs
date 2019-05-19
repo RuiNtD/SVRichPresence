@@ -7,6 +7,7 @@ using StardewValley;
 using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace SVRichPresence {
@@ -41,6 +42,8 @@ namespace SVRichPresence {
 			}
 #endif
 
+			var cd = Directory.GetCurrentDirectory();
+			Directory.SetCurrentDirectory(helper.DirectoryPath);
 			api = new RichPresenceAPI(this);
 			client = new DiscordRpcClient(clientId,
 				logger: new RPLogger(Monitor, DiscordRPC.Logging.LogLevel.Warning),
@@ -48,6 +51,7 @@ namespace SVRichPresence {
 				client: Constants.TargetPlatform == GamePlatform.Windows ?
 					null : new UnityNamedPipe()
 			);
+			Directory.SetCurrentDirectory(cd);
 
 			client.OnReady += (sender, e) => {
 				Monitor.Log("Connected to Discord: " + e.User, LogLevel.Info);
