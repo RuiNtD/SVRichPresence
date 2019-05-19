@@ -1,4 +1,5 @@
 ﻿using DiscordRPC;
+using DiscordRPC.Unity;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -44,7 +45,8 @@ namespace SVRichPresence {
 			client = new DiscordRpcClient(clientId,
 				logger: new RPLogger(Monitor, DiscordRPC.Logging.LogLevel.Warning),
 				autoEvents: false,
-				client: new DiscordRPC.IO.ManagedNamedPipeClient()
+				client: Constants.TargetPlatform == GamePlatform.Windows ?
+					null : new UnityNamedPipe()
 			);
 
 			client.OnReady += (sender, e) => {
