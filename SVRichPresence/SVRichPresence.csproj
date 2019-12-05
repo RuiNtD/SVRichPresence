@@ -66,6 +66,12 @@
     <None Include="CHANGELOG.md" />
     <None Include="manifest.json" />
     <None Include="packages.config" />
+    <None Include="discord_game_sdk.dylib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="discord_game_sdk.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Content Include="discord_game_sdk.dll">

@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Constants = StardewModdingAPI.Constants;
 using LogLevel = StardewModdingAPI.LogLevel;
 using Utility = StardewValley.Utility;
@@ -45,17 +44,13 @@ namespace SVRichPresence {
 				Monitor.Log("https://youtu.be/T3djXcx2ewQ", LogLevel.Alert);
 			}
 #endif
-
-			AppDomain.CurrentDomain.AssemblyResolve += (object sender, ResolveEventArgs e) => {
-				try {
-					var name = new AssemblyName(e.Name);
-					foreach (FileInfo dll in new DirectoryInfo(Helper.DirectoryPath).EnumerateFiles("*.dll")) {
-						if (name.Name.Equals(AssemblyName.GetAssemblyName(dll.FullName).Name, StringComparison.InvariantCultureIgnoreCase))
-							return Assembly.LoadFrom(dll.FullName);
-					}
-				} catch { }
-				return null;
-			};
+			if (Constants.TargetPlatform == GamePlatform.Android) {
+				Monitor.Log("Discord RPC is not supported on Android.", LogLevel.Error);
+				Monitor.Log("Aborting mod initialization.", LogLevel.Error);
+				Dispose();
+				return;
+			}
+			SetupLibs();
 
 			api = new RichPresenceAPI(this);
 			try {
@@ -238,6 +233,39 @@ namespace SVRichPresence {
 				Context.IsMultiplayer && Context.IsMainPlayer ? "Hosting" : "Playing", true);
 			tagReg.SetTag("GameNoun", () => Context.IsMultiplayer ? "Co-op" : "Solo", true);
 			tagReg.SetTag("GameInfo", () => api.GetTag("GameVerb") + " " + api.GetTag("GameNoun"), true);
+		}
+		private void SetupLibs() {
+			string libExt;
+			if (Constants.TargetPlatform == GamePlatform.Linux)
+				libExt = "so";
+			else if (Constants.TargetPlatform == GamePlatform.Mac)
+				libExt = "dylib";
+			else
+				return;
+			string libName = "discord_game_sdk." + libExt;
+			string libPath = Path.Combine(Helper.DirectoryPath, libName);
+			string sdvPath = Path.Combine(Constants.ExecutionPath, "lib" + libName);
+			try {
+				Boolean attempt = false;
+				if (!File.Exists(sdvPath)) {
+					Monitor.Log("RPC Lib: Attempting install");
+					attempt = true;
+				} else if (File.GetLastWriteTime(libPath) > File.GetLastWriteTime(sdvPath)) {
+					Monitor.Log("RPC Lib: Attempting update");
+					attempt = true;
+				}
+				if (attempt) {
+					File.Copy(libPath, sdvPath, true);
+					File.SetLastWriteTime(sdvPath, File.GetLastWriteTime(libPath)); // just making sure
+					Monitor.Log("Discord RPC library installed.", LogLevel.Info);
+				} else
+					Monitor.Log("RPC Lib: No action needed");
+			} catch (IOException e) {
+				Monitor.Log("Failed to install Discord RPC library.", LogLevel.Warn);
+				Monitor.Log(e.ToString(), LogLevel.Trace);
+				if (!File.Exists(sdvPath))
+					Monitor.Log("I shall crash now. x_x", LogLevel.Error);
+			}
 		}
 
 		private void JoinGame(string inviteCode) {
