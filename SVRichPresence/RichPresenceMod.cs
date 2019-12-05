@@ -1,4 +1,4 @@
-﻿using Discord;
+﻿using DiscordRPC;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -14,12 +14,11 @@ using Utility = StardewValley.Utility;
 
 namespace SVRichPresence {
 	public class RichPresenceMod : Mod {
-		private const long clientId = 444517509148966923;
-		private const int steamId = 413150;
+		private const string clientId = "444517509148966923";
+		private const string steamId = "413150";
 		private ModConfig config = new ModConfig();
 		private IRichPresenceAPI api;
-		private Discord.Discord discord;
-		private ActivityManager activityManager;
+		private DiscordRpcClient client;
 
 		public override void Entry(IModHelper helper) {
 #if DEBUG
@@ -50,53 +49,26 @@ namespace SVRichPresence {
 				Dispose();
 				return;
 			}
-			SetupLibs();
 
 			api = new RichPresenceAPI(this);
-			try {
-				discord = new Discord.Discord(clientId, (ulong)CreateFlags.NoRequireDiscord);
-			} catch (Discord.ResultException e) {
-				Monitor.Log("Failed to initialize Discord SDK: " + e.Message, LogLevel.Error);
-				Monitor.Log("Rich Presence cannot be activated. Restart the game to try again.", LogLevel.Error);
-				Dispose();
-				return;
-			}
-			discord.SetLogHook(Discord.LogLevel.Debug, (Discord.LogLevel level, string message) => {
-				LogLevel sdlevel = LogLevel.Trace;
-				switch (level) {
-					case Discord.LogLevel.Error:
-						sdlevel = LogLevel.Error;
-						break;
-					case Discord.LogLevel.Warn:
-						sdlevel = LogLevel.Warn;
-						break;
-					case Discord.LogLevel.Info:
-						sdlevel = LogLevel.Info;
-						break;
-					case Discord.LogLevel.Debug:
-						sdlevel = LogLevel.Debug;
-						break;
-				};
-				Monitor.Log("DISCORD: " + message, sdlevel);
-			});
-			discord.GetUserManager().OnCurrentUserUpdate += () => {
-				User user = discord.GetUserManager().GetCurrentUser();
-				Monitor.Log("Connected to Discord: " + GetDiscordTag(user, true), LogLevel.Info);
+			client = new DiscordRpcClient(clientId,
+				logger: new MonitorLogger(Monitor));
+			client.RegisterUriScheme(steamId);
+			client.OnReady += (sender, e) => {
+				Monitor.Log("Connected to Discord: " + GetDiscordTag(e.User, true), LogLevel.Info);
 			};
-			activityManager = discord.GetActivityManager();
-			activityManager.RegisterSteam(steamId);
-
-			activityManager.OnActivityJoin += (string secret) => {
+			client.OnJoin += (sender, args) => {
 				Monitor.Log("Attempting to join game", LogLevel.Info);
-				JoinGame(secret);
+				JoinGame(args.Secret);
 			};
-
-			activityManager.OnActivityJoinRequest += (ref User user) => {
-				string tag = GetDiscordTag(user);
+			client.OnJoinRequested += (sender, args) => {
+				string tag = GetDiscordTag(args.User);
 				Monitor.Log(tag + " is requesting to join your game.", LogLevel.Alert);
-				Monitor.Log("You can respond to this request in Discord Overlay.", LogLevel.Info);
+				Monitor.Log("You can respond to this request from Discord or its overlay.", LogLevel.Info);
 				Game1.chatBox.addInfoMessage(tag + " is requesting to join your game. You can respond to this request in Discord Overlay.");
 			};
+			client.Initialize();
+			client.SetSubscription(EventType.Join | EventType.JoinRequest);
 
 			Helper.ConsoleCommands.Add("DiscordRP_TestJoin",
 				"Command for debugging.",
@@ -176,7 +148,7 @@ namespace SVRichPresence {
 				api.GamePresence = "Starting a New Game";
 			Helper.Events.GameLoop.GameLaunched += (object sender, GameLaunchedEventArgs e) => {
 				SetTimestamp();
-				timestampSession = Now();
+				timestampSession = Timestamps.Now;
 			};
 
 			ITagRegister tagReg = api.GetTagRegister(this);
@@ -234,39 +206,6 @@ namespace SVRichPresence {
 			tagReg.SetTag("GameNoun", () => Context.IsMultiplayer ? "Co-op" : "Solo", true);
 			tagReg.SetTag("GameInfo", () => api.GetTag("GameVerb") + " " + api.GetTag("GameNoun"), true);
 		}
-		private void SetupLibs() {
-			string libExt;
-			if (Constants.TargetPlatform == GamePlatform.Linux)
-				libExt = "so";
-			else if (Constants.TargetPlatform == GamePlatform.Mac)
-				libExt = "dylib";
-			else
-				return;
-			string libName = "discord_game_sdk." + libExt;
-			string libPath = Path.Combine(Helper.DirectoryPath, libName);
-			string sdvPath = Path.Combine(Constants.ExecutionPath, "lib" + libName);
-			try {
-				Boolean attempt = false;
-				if (!File.Exists(sdvPath)) {
-					Monitor.Log("RPC Lib: Attempting install");
-					attempt = true;
-				} else if (File.GetLastWriteTime(libPath) > File.GetLastWriteTime(sdvPath)) {
-					Monitor.Log("RPC Lib: Attempting update");
-					attempt = true;
-				}
-				if (attempt) {
-					File.Copy(libPath, sdvPath, true);
-					File.SetLastWriteTime(sdvPath, File.GetLastWriteTime(libPath)); // just making sure
-					Monitor.Log("Discord RPC library installed.", LogLevel.Info);
-				} else
-					Monitor.Log("RPC Lib: No action needed");
-			} catch (IOException e) {
-				Monitor.Log("Failed to install Discord RPC library.", LogLevel.Warn);
-				Monitor.Log(e.ToString(), LogLevel.Trace);
-				if (!File.Exists(sdvPath))
-					Monitor.Log("I shall crash now. x_x", LogLevel.Error);
-			}
-		}
 
 		private void JoinGame(string inviteCode) {
 			object lobby = Program.sdk.Networking.GetLobbyFromInviteCode(inviteCode);
@@ -290,64 +229,58 @@ namespace SVRichPresence {
 			}
 		}
 
-		private int Now() => (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-
 		private void LoadConfig() => config = Helper.ReadConfig<ModConfig>();
 		private void SaveConfig() => Helper.WriteConfig(config);
 
-		private long timestampSession;
-		private long timestampFarm;
+		private Timestamps timestampSession;
+		private Timestamps timestampFarm;
 		private void SetTimestamp(object sender, EventArgs e) => SetTimestamp();
-		private void SetTimestamp() => timestampFarm = Now();
+		private void SetTimestamp() => timestampFarm = Timestamps.Now;
 
 		private void DoUpdate(object sender, UpdateTickedEventArgs e) {
 			try {
-				discord.RunCallbacks();
 				if (e.IsMultipleOf(30))
-					activityManager.UpdateActivity(GetActivity(), (result) => {
-						if (result != Result.Ok)
-							Monitor.Log("Update Activity: " + result);
-					});
+					client.SetPresence(GetActivity());
 			} catch { }
 		}
 
 		private MenuPresence Conf => !Context.IsWorldReady ?
 			config.MenuPresence : config.GamePresence;
 
-		private Discord.Activity GetActivity() {
-			var activity = new Activity {
+		private RichPresence GetActivity() {
+			var presence = new RichPresence() {
 				Details = api.FormatText(Conf.Details),
 				State = api.FormatText(Conf.State),
 				Assets = {
-					LargeImage = "default_large",
-					LargeText = api.FormatText(Conf.LargeImageText),
-					SmallText = api.FormatText(Conf.SmallImageText)
+					LargeImageKey = "default_large",
+					LargeImageText = api.FormatText(Conf.LargeImageText),
+					SmallImageText = api.FormatText(Conf.SmallImageText)
 				}
 			};
-			if (Conf.ForceSmallImage || activity.Assets.SmallText.Length > 0)
-				activity.Assets.SmallImage = "default_small";
+			if (Conf.ForceSmallImage || presence.Assets.SmallImageText.Length > 0)
+				presence.Assets.SmallImageKey = "default_small";
 
 			if (Context.IsWorldReady) {
 				var conf = (GamePresence)Conf;
 				if (conf.ShowSeason)
-					activity.Assets.LargeImage = $"{Game1.currentSeason}_{FarmTypeKey()}";
+					presence.Assets.LargeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}";
 				if (conf.ShowWeather)
-					activity.Assets.SmallImage = "weather_" + WeatherKey();
+					presence.Assets.SmallImageKey = "weather_" + WeatherKey();
 				if (conf.ShowPlayTime)
-					activity.Timestamps.Start = timestampFarm;
+					presence.Timestamps = timestampFarm;
 				if (Context.IsMultiplayer && conf.AllowAskToJoin)
 					try {
-						activity.Party.Id = Game1.MasterPlayer.UniqueMultiplayerID.ToString();
-						activity.Party.Size.CurrentSize = Game1.numberOfPlayers();
-						activity.Party.Size.MaxSize = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1;
-						activity.Secrets.Join = Game1.server.getInviteCode();
+						presence.Party.ID = Game1.MasterPlayer.UniqueMultiplayerID.ToString();
+						presence.Party.Size = Game1.numberOfPlayers();
+						presence.Party.Max = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1;
+						presence.Secrets.JoinSecret = Game1.server.getInviteCode();
 					} catch { }
 			}
 
 			if (config.ShowGlobalPlayTime)
-				activity.Timestamps.Start = timestampSession;
+				presence.Timestamps = timestampSession;
 
-			return activity;
+			return presence;
 		}
 
 		private string FarmTypeKey() {
@@ -384,9 +317,9 @@ namespace SVRichPresence {
 		}
 
 		private string GetDiscordTag(User user, bool includeId = false) {
-			string ret = user.Username + "#" + user.Discriminator;
+			string ret = user.ToString();
 			if (includeId)
-				ret += " (" + user.Id + ")";
+				ret += " (" + user.ID + ")";
 			return ret;
 		}
 	}
