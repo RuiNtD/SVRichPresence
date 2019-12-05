@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.3.0-beta1] - 2019-05-12
 ### Added
 - Re-added RPC handler listeners.
 - Support for Ask to Join, with a config option to disable it.
@@ -94,11 +96,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed Discord event handlers due to them not triggering.
 
-[Unreleased]: https://github.com/FayneAldan/SVRichPrsence/compare/2.2.2...HEAD
-[2.2.2]: https://github.com/FayneAldan/SVRichPrsence/compare/2.2.1...2.2.2
-[2.2.1]: https://github.com/FayneAldan/SVRichPrsence/compare/2.2.0...2.2.1
-[2.2.0]: https://github.com/FayneAldan/SVRichPrsence/compare/2.0.0...2.2.0
-[2.0.0]: https://github.com/FayneAldan/SVRichPrsence/compare/1.2.1...2.0.0
-[1.2.1]: https://github.com/FayneAldan/SVRichPrsence/compare/1.2.0...1.2.1
-[1.2.0]: https://github.com/FayneAldan/SVRichPrsence/compare/1.1.0...1.2.0
-[1.1.0]: https://github.com/FayneAldan/SVRichPrsence/releases/tag/1.1.0
+[Unreleased]: https://github.com/FayneAldan/SVRichPresence/compare/2.3.0-beta1...HEAD
+[2.3.0-beta1]: https://github.com/FayneAldan/SVRichPresence/compare/2.2.2...2.3.0-beta1
+[2.2.2]: https://github.com/FayneAldan/SVRichPresence/compare/2.2.1...2.2.2
+[2.2.1]: https://github.com/FayneAldan/SVRichPresence/compare/2.2.0...2.2.1
+[2.2.0]: https://github.com/FayneAldan/SVRichPresence/compare/2.0.0...2.2.0
+[2.0.0]: https://github.com/FayneAldan/SVRichPresence/compare/1.2.1...2.0.0
+[1.2.1]: https://github.com/FayneAldan/SVRichPresence/compare/1.2.0...1.2.1
+[1.2.0]: https://github.com/FayneAldan/SVRichPresence/compare/1.1.0...1.2.0
+[1.1.0]: https://github.com/FayneAldan/SVRichPresence/releases/tag/1.1.0
