@@ -42,7 +42,7 @@ namespace SVRichPresence {
 				Monitor.Log("WAIT A MINUTE.", LogLevel.Alert);
 				Monitor.Log("FAYNE.", LogLevel.Alert);
 				Monitor.Log("WHY DID YOU RELEASE A NON-DEBUG DEV BUILD?!", LogLevel.Alert);
-				Monitor.Log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", LogLevel.Alert);
+				Monitor.Log("https://youtu.be/T3djXcx2ewQ", LogLevel.Alert);
 			}
 #endif
 
