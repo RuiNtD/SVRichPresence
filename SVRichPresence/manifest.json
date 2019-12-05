@@ -5,7 +5,7 @@
 	"Description": "Shows your in-game state on your Discord profile.",
 	"UniqueID": "FayneAldan.RichPresence",
 	"EntryDll": "SVRichPresence.dll",
-	"MinimumApiVersion": "2.0",
+	"MinimumApiVersion": "3.0",
 	"UpdateKeys": [
 		"Nexus:2156",
 		"GitHub:FayneAldan/SVRichPresence"
