@@ -30,7 +30,8 @@ namespace SVRichPresence {
 		}
 
 		private void Log(string message, object[] args, SDVLogLevel level) {
-			Monitor.Log("DISCORD: " + String.Format(message, args), level);
+			if (Monitor.IsVerbose)
+				Monitor.Log("DISCORD: " + String.Format(message, args), level);
 		}
 	}
 }
