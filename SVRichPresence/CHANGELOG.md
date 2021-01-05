@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - `discord` command used for Ask to Join (removed in last update)
 - Code that went unused from removal of Ask to Join
-- `{ PercentComplete }` tag due to lag issues
+- `{{ PercentComplete }}` tag due to lag issues
 
 ### Changed
 - Commands changed from starting with `DiscordRP_` to just `Discord`
