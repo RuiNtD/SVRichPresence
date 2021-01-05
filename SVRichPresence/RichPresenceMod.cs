@@ -63,23 +63,7 @@ namespace SVRichPresence {
 			client.OnReady += (sender, e) => {
 				Monitor.Log("Connected to Discord: " + e.User.ToString(), LogLevel.Info);
 			};
-			client.OnJoin += (sender, args) => {
-				Monitor.Log("Attempting to join game: " + args.Secret, LogLevel.Info);
-				JoinGame(args.Secret);
-			};
-			client.OnJoinRequested += (sender, msg) => {
-				string name = msg.User.Username;
-				string tag = msg.User.ToString();
-				ushort id = (ushort)rand.Next(ushort.MinValue, ushort.MaxValue);
-				requests[id] = msg;
-				lastRequestID = id;
-				string hex = id.ToString("X");
-				Monitor.Log(tag + " wants to join your game via Discord.", LogLevel.Alert);
-				Monitor.Log("To respond type \"discord " + hex + " yes/no\" or just \"discord yes/no\"", LogLevel.Info);
-				Game1.chatBox.addMessage(name + " wants to join your game via Discord.\nTo respond check the console or use Discord or its overlay.", blurple);
-			};
 			client.Initialize();
-			client.SetSubscription(EventType.Join | EventType.JoinRequest);
 
 			#region Console Commands
 			Helper.ConsoleCommands.Add("discord",
@@ -116,12 +100,6 @@ namespace SVRichPresence {
 							}
 							break;
 					}
-				}
-			);
-			Helper.ConsoleCommands.Add("DiscordRP_Join",
-				"Join a co-op game via invite code.",
-				(string command, string[] args) => {
-					JoinGame(string.Join(" ", args));
 				}
 			);
 			Helper.ConsoleCommands.Add("DiscordRP_Reload",
@@ -268,14 +246,6 @@ namespace SVRichPresence {
 			requests[id] = null;
 		}
 
-		private void JoinGame(string inviteCode) {
-			Game1.ExitToTitle(() => {
-				object lobby = Program.sdk.Networking.GetLobbyFromInviteCode(inviteCode);
-				if (lobby == null) return;
-				TitleMenu.subMenu = new FarmhandMenu(Program.sdk.Networking.CreateClient(lobby));
-			});
-		}
-
 		public override object GetApi() => api;
 
 		private void HandleButton(object sender, ButtonReleasedEventArgs e) {
@@ -329,15 +299,12 @@ namespace SVRichPresence {
 					assets.SmallImageKey = "weather_" + WeatherKey();
 				if (conf.ShowPlayTime)
 					presence.Timestamps = timestampFarm;
-				if (Context.IsMultiplayer && conf.AllowAskToJoin)
+				if (Context.IsMultiplayer)
 					try {
 						presence.Party = new Party {
 							ID = Game1.MasterPlayer.UniqueMultiplayerID.ToString(),
 							Size = Game1.numberOfPlayers(),
 							Max = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1
-						};
-						presence.Secrets = new Secrets {
-							JoinSecret = Game1.server.getInviteCode()
 						};
 					} catch { }
 			}
