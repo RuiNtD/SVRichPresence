@@ -14,9 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Commands changed from starting with `DiscordRP_` to just `Discord`
-	- `DiscordRP_Reload` -> `DiscordReload`
-	- `DiscordRP_Format` -> `DiscordFormat`
-	- `DiscordRP_Tags` -> `DiscordTags`
+  - `DiscordRP_Reload` -> `DiscordReload`
+  - `DiscordRP_Format` -> `DiscordFormat`
+  - `DiscordRP_Tags` -> `DiscordTags`
 
 ## [2.4.0] - 2021-01-05
 ### Added
