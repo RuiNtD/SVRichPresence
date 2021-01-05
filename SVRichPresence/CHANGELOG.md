@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2021-01-05
+### Added
+- `float` value support for tags in API
+
+### Changed
+- Migrated to "new" project format
+
+### Fixed
+- Supports Stardew Valley 1.5
+
+### Removed
+- Ask to Join support (Networking SDK no longer accessible)
+- `AllowAskToJoin` from config
+
 ## [2.3.1] - 2019-12-05
 ### Added
 - `discord` console command to respond to Ask to Join requests via console.
@@ -121,7 +135,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed Discord event handlers due to them not triggering.
 
-[Unreleased]: https://github.com/FayneAldan/SVRichPresence/compare/v2.3.1...HEAD
+[Unreleased]: https://github.com/FayneAldan/SVRichPresence/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/FayneAldan/SVRichPresence/compare/v2.3.1...v2.4.0
 [2.3.1]: https://github.com/FayneAldan/SVRichPresence/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/FayneAldan/SVRichPresence/compare/2.3.0-beta1...v2.3.0
 [2.3.0-beta1]: https://github.com/FayneAldan/SVRichPresence/compare/2.2.2...2.3.0-beta1
