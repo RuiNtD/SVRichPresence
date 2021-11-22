@@ -1,11 +1,8 @@
 ﻿using DiscordRPC;
-using DiscordRPC.Message;
-using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
-using StardewValley.Menus;
 using System;
 using System.Collections.Generic;
 using System.Linq;
