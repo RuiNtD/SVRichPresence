@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
@@ -12,16 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `DiscordTags` mentioning old command name
 
 ## [2.4.1] - 2021-01-05
-### Removed
-- `discord` command used for Ask to Join (removed in last update)
-- Code that went unused from removal of Ask to Join
-- `{{ PercentComplete }}` tag due to lag issues
-
 ### Changed
 - Commands changed from starting with `DiscordRP_` to just `Discord`
   - `DiscordRP_Reload` -> `DiscordReload`
   - `DiscordRP_Format` -> `DiscordFormat`
   - `DiscordRP_Tags` -> `DiscordTags`
+
+### Removed
+- `discord` command used for Ask to Join (removed in last update)
+- Code that went unused from removal of Ask to Join
+- `{{ PercentComplete }}` tag due to lag issues
 
 ## [2.4.0] - 2021-01-05
 ### Added
@@ -68,12 +68,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for Ask to Join, with a config option to disable it.
 - `DiscordRP_TestJoin` console command to join a game via invite code (for testing).
 
-### Removed
-- Automatic Mac and Linux setup because it's no longer needed.
-
 ### Changed
 - Changed to new Discord Game SDK.
 - API's `FormatText' function now returns `""` instead of `null` if given an empty string.
+
+### Removed
+- Automatic Mac and Linux setup because it's no longer needed.
 
 ### Fixed
 - ACTUALLY fixed potential error when generating presence in co-op.
