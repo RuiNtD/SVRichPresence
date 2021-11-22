@@ -118,7 +118,7 @@ namespace SVRichPresence {
 							else output.Add("  {{ " + tag.Key.PadLeft(longest) + " }}: " + tag.Value);
 					}
 					if (nulls > 0)
-						output.Add(nulls + " tag" + (nulls != 1 ? "s" : "") + " unavailable; type `DiscordRP_Tags all` to show all");
+						output.Add(nulls + " tag" + (nulls != 1 ? "s" : "") + " unavailable; type `DiscordTags all` to show all");
 					Monitor.Log(string.Join(Environment.NewLine, output), LogLevel.Info);
 				}
 			);
