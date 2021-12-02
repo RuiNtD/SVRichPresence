@@ -1,4 +1,4 @@
-using StardewModdingAPI;
+﻿using StardewModdingAPI;
 
 namespace SVRichPresence
 {
@@ -8,6 +8,7 @@ namespace SVRichPresence
         public bool ShowGlobalPlayTime = false;
         public MenuPresence MenuPresence = new();
         public GamePresence GamePresence = new();
+        public bool AddGetModButton = true;
     }
 
     internal class MenuPresence

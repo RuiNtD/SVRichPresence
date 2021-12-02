@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
-- Better support for 64-bit Stardew Valley.
+- Support for Stardew Valley 1.5.5
+- Added Get Mod button to rich presence (can be disabled)
 
 ### Fixed
+- Linux support
 - Fixed `DiscordTags` mentioning old command name
 
 ## [2.4.1] - 2021-01-05

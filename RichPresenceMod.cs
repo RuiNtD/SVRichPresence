@@ -1,4 +1,4 @@
-using DiscordRPC;
+﻿using DiscordRPC;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -34,6 +34,7 @@ namespace SVRichPresence
             client = new DiscordRpcClient(clientId,
                 autoEvents: false,
                 logger: new MonitorLogger(Monitor));
+            client.SetSubscription(EventType.Join);
             client.RegisterUriScheme(steamId);
             client.OnReady += (sender, e) =>
             {
@@ -261,6 +262,11 @@ namespace SVRichPresence
 
             if (config.ShowGlobalPlayTime)
                 presence.Timestamps = timestampSession;
+            if (config.AddGetModButton)
+                presence.Buttons = new Button[]
+                {
+                    new Button() { Label = "Get SDV Rich Presence Mod", Url = "https://faynealdan.github.io/SVRichPresence/" }
+                };
 
             presence.Assets = assets;
             return presence;
