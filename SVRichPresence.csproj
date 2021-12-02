@@ -2,6 +2,7 @@
   <PropertyGroup>
     <Version>2.4.1</Version>
     <TargetFramework>net5.0</TargetFramework>
+    <BundleExtraAssemblies>ThirdParty</BundleExtraAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
