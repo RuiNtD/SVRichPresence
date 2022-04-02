@@ -74,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed to new Discord Game SDK.
-- API's `FormatText' function now returns `""` instead of `null` if given an empty string.
+- API's `FormatText` function now returns `""` instead of `null` if given an empty string.
 
 ### Removed
 - Automatic Mac and Linux setup because it's no longer needed.
