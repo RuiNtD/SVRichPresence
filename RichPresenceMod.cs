@@ -1,4 +1,5 @@
 ﻿using DiscordRPC;
+using GenericModConfigMenu;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -14,7 +15,7 @@ namespace SVRichPresence {
   public class RichPresenceMod : Mod {
     private static readonly string clientId = "444517509148966923";
     private static readonly string steamId = "413150";
-    private ModConfig config = new();
+    private ModConfig Config = new();
     private IRichPresenceAPI api;
     private DiscordRpcClient client;
 
@@ -104,6 +105,7 @@ namespace SVRichPresence {
       #endregion
       LoadConfig();
 
+      Helper.Events.GameLoop.GameLaunched += RegisterConfigMenu;
       Helper.Events.Input.ButtonReleased += HandleButton;
       Helper.Events.GameLoop.UpdateTicked += DoUpdate;
       Helper.Events.GameLoop.SaveLoaded += SetTimestamp;
@@ -120,7 +122,7 @@ namespace SVRichPresence {
       ITagRegister tagReg = api.GetTagRegister(this);
 
       #region Default Tags
-
+      
       tagReg.SetTag("Activity", () => api.GamePresence);
       tagReg.SetTag("ModCount", () => Helper.ModRegistry.GetAll().Count());
       tagReg.SetTag("SMAPIVersion", () => Constants.ApiVersion.ToString());
@@ -139,7 +141,7 @@ namespace SVRichPresence {
         // Copied from LoadGameMenu.drawSlotMoney
         string cashText = Game1.content.LoadString("Strings\\StringsFromCSFiles:LoadGameMenu.cs.11020", Utility.getNumberWithCommas(Game1.player.Money));
         if (Game1.player.Money == 1 && LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.pt)
-          cashText = cashText.Substring(0, cashText.Length - 1);
+          cashText = cashText[..^1];
         return cashText;
       });
       tagReg.SetWorldTag("MoneyCommas", () => Utility.getNumberWithCommas(Game1.player.Money));
@@ -175,8 +177,133 @@ namespace SVRichPresence {
 
     public override object GetApi() => api;
 
+    private void RegisterConfigMenu(object sender, GameLaunchedEventArgs e) {
+      // get Generic Mod Config Menu's API (if it's installed)
+      var configMenu = this.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
+      if (configMenu is null) return;
+      var mod = ModManifest;
+
+      configMenu.Register(mod,
+        reset: () => Config = new ModConfig(),
+        save: () => SaveConfig()
+      );
+
+      configMenu.AddBoolOption(mod,
+          name: () => "Show global playtime",
+          getValue: () => this.Config.ShowGlobalPlayTime,
+          setValue: value => this.Config.ShowGlobalPlayTime = value
+      );
+      configMenu.AddBoolOption(mod,
+          name: () => "Add Get Mod Button",
+          tooltip: () => "Support the mod by adding a link to it on your rich presence.",
+          getValue: () => this.Config.AddGetModButton,
+          setValue: value => this.Config.AddGetModButton = value
+      );
+
+      configMenu.AddSectionTitle(mod, () => "Preview");
+      configMenu.AddParagraph(mod, () => {
+        var text = this.api.FormatText(Conf.State) + "\n";
+        text += this.api.FormatText(Conf.Details) + "\n";
+        var large = this.api.FormatText(Conf.LargeImageText);
+        if (large.Length > 0) text += $"Large image text: {large}\n";
+        var small = this.api.FormatText(Conf.SmallImageText);
+        if (small.Length > 0) text += $"Small image text: {small}\n";
+        return text;
+      });
+
+      configMenu.AddSectionTitle(mod, () => "Customize Presence in Menus");
+      RPCModMenuSection(configMenu, Config.MenuPresence);
+
+      configMenu.AddSectionTitle(mod, () => "Customize Presence in Game");
+      RPCModMenuSection(configMenu, Config.GamePresence);
+      configMenu.AddBoolOption(mod,
+        name: () => "Show season",
+        tooltip: () => "Show the current season on large image",
+        getValue: () => Config.GamePresence.ShowSeason,
+        setValue: value => Config.GamePresence.ShowSeason = value
+       );
+      configMenu.AddBoolOption(mod,
+        name: () => "Show farm type",
+        tooltip: () => "Show the farm type on large image",
+        getValue: () => Config.GamePresence.ShowFarmType,
+        setValue: value => Config.GamePresence.ShowFarmType = value
+      );
+      configMenu.AddBoolOption(mod,
+        name: () => "Show weather",
+        tooltip: () => "Show the current weather on small image",
+        getValue: () => Config.GamePresence.ShowWeather,
+        setValue: value => Config.GamePresence.ShowWeather = value
+      );
+      configMenu.AddBoolOption(mod,
+        name: () => "Show play time",
+        tooltip: () => "Show how long you've been playing",
+        getValue: () => Config.GamePresence.ShowPlayTime,
+        setValue: value => Config.GamePresence.ShowPlayTime = value
+      );
+
+      configMenu.AddPage(mod, "tags", () => "Tags");
+      configMenu.AddParagraph(mod, () => {
+        var api = this.api;
+        IDictionary<string, string> tags = api.ListTags("[NULL]", "[ERROR]");
+
+        IDictionary<string, IDictionary<string, string>> groups =
+          new Dictionary<string, IDictionary<string, string>>();
+        foreach (KeyValuePair<string, string> tag in tags) {
+          string owner = api.GetTagOwner(tag.Key) ?? "Unknown-Mod";
+          if (!groups.ContainsKey(owner))
+            groups[owner] = new Dictionary<string, string>();
+          groups[owner][tag.Key] = tag.Value;
+        }
+
+        IList<string> output = new List<string>(tags.Count + groups.Count);
+        foreach (KeyValuePair<string, string> tag in groups[ModManifest.UniqueID])
+          output.Add($"{{{{ {tag.Key} }}}}: {tag.Value}");
+
+        foreach (KeyValuePair<string, IDictionary<string, string>> group in groups) {
+          if (group.Key == ModManifest.UniqueID) continue;
+          output.Add($"\nTags from {Helper.ModRegistry.Get(group.Key)?.Manifest.Name ?? "an unknown mod"}:");
+
+          foreach (KeyValuePair<string, string> tag in group.Value)
+            output.Add($"{{{{ {tag.Key} }}}}: {tag.Value}");
+        }
+
+        return string.Join("\n", output);
+      });
+  }
+
+    private void RPCModMenuSection(IGenericModConfigMenuApi api, MenuPresence conf) {
+      var mod = ModManifest;
+      api.AddPageLink(mod, "tags", () => "Show available tags");
+      api.AddTextOption(mod,
+        name: () => "Line 1 (State)",
+        getValue: () => conf.State,
+        setValue: value => conf.State = value
+      );
+      api.AddTextOption(mod,
+        name: () => "Line 2 (Details)",
+        getValue: () => conf.Details,
+        setValue: value => conf.Details = value
+      );
+      api.AddTextOption(mod,
+        name: () => "Large Image Text",
+        getValue: () => conf.LargeImageText,
+        setValue: value => conf.LargeImageText = value
+      );
+      api.AddTextOption(mod,
+        name: () => "Small Image Text",
+        getValue: () => conf.SmallImageText,
+        setValue: value => conf.SmallImageText = value
+      );
+      api.AddBoolOption(mod,
+        name: () => "Force small image",
+        tooltip: () => "Always show small image, even if small text is empty and weather isn't shown.",
+        getValue: () => conf.ForceSmallImage,
+        setValue: value => conf.ForceSmallImage = value
+      );
+    }
+
     private void HandleButton(object sender, ButtonReleasedEventArgs e) {
-      if (e.Button != config.ReloadConfigButton)
+      if (e.Button != Config.ReloadConfigButton)
         return;
       try {
         LoadConfig();
@@ -187,9 +314,9 @@ namespace SVRichPresence {
       }
     }
 
-    private void LoadConfig() => config = Helper.ReadConfig<ModConfig>();
+    private void LoadConfig() => Config = Helper.ReadConfig<ModConfig>();
 
-    private void SaveConfig() => Helper.WriteConfig(config);
+    private void SaveConfig() => Helper.WriteConfig(Config);
 
     private Timestamps timestampSession;
     private Timestamps timestampFarm;
@@ -203,19 +330,20 @@ namespace SVRichPresence {
     }
 
     private MenuPresence Conf => !Context.IsWorldReady ?
-        config.MenuPresence : config.GamePresence;
+        Config.MenuPresence : Config.GamePresence;
 
     private RichPresence GetPresence() {
       var presence = new RichPresence {
         Details = api.FormatText(Conf.Details),
         State = api.FormatText(Conf.State)
       };
+      var smallImageText = api.FormatText(Conf.SmallImageText);
       var assets = new Assets {
         LargeImageKey = "default_large",
         LargeImageText = api.FormatText(Conf.LargeImageText),
-        SmallImageText = api.FormatText(Conf.SmallImageText)
+        SmallImageText = smallImageText,
       };
-      if (Conf.ForceSmallImage || assets.SmallImageText?.Length > 0)
+      if (Conf.ForceSmallImage || smallImageText.Length > 0)
         assets.SmallImageKey = "default_small";
 
       if (Context.IsWorldReady) {
@@ -236,9 +364,9 @@ namespace SVRichPresence {
           } catch { }
       }
 
-      if (config.ShowGlobalPlayTime)
+      if (Config.ShowGlobalPlayTime)
         presence.Timestamps = timestampSession;
-      if (config.AddGetModButton)
+      if (Config.AddGetModButton)
         presence.Buttons = new Button[] {
           new() { Label = "Get SDV Rich Presence Mod", Url = "https://ruintd.github.io/SVRichPresence/" }
         };
@@ -248,7 +376,7 @@ namespace SVRichPresence {
     }
 
     private string FarmTypeKey() {
-      if (!((GamePresence)Conf).ShowFarmType)
+      if (!Config.GamePresence.ShowFarmType)
         return "default";
       return Game1.whichFarm switch {
         Farm.default_layout => "standard",

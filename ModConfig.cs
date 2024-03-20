@@ -11,8 +11,8 @@ namespace SVRichPresence {
 
   internal class MenuPresence {
     public bool ForceSmallImage = false;
-    public string Details = "";
     public string State = "In Menus";
+    public string Details = "";
     public string LargeImageText = "{{ Activity }}";
     public string SmallImageText = "";
   }
@@ -24,8 +24,8 @@ namespace SVRichPresence {
     public bool ShowPlayTime = true;
 
     public GamePresence() {
-      Details = "{{ Farm }} | {{ Money }}";
       State = "{{ GameInfo }}";
+      Details = "{{ Farm }} | {{ Money }}";
       SmallImageText = "{{ Date }}";
     }
   }
