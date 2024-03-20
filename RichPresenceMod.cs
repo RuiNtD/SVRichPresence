@@ -157,6 +157,7 @@ namespace SVRichPresence
             tagReg.SetWorldTag("LevelNumber", () => Game1.player.Level);
             tagReg.SetWorldTag("Title", () => Game1.player.getTitle());
             tagReg.SetWorldTag("TotalTime", () => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed));
+            tagReg.SetWorldTag("TotalTimeLetterFormat", () => (Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed)).replace(":", "h"));
 
             tagReg.SetWorldTag("Health", () => Game1.player.health);
             tagReg.SetWorldTag("HealthMax", () => Game1.player.maxHealth);
