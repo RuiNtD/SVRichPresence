@@ -7,6 +7,7 @@ namespace SVRichPresence
 {
     public interface IRichPresenceAPI
     {
+        #region Static Tags
         /// <summary>
         ///	Sets a tag in the registry.
         /// </summary>
@@ -15,25 +16,161 @@ namespace SVRichPresence
         /// <param name="value">The value of the tag</param>
         /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(Mod mod, string key, string value);
+        /// <summary>
+        ///	Sets a tag in the registry.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="value">The value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(Mod mod, string key, NetString value);
+        /// <summary>
+        ///	Sets a tag in the registry.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="value">The value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(Mod mod, string key, int value);
+        /// <summary>
+        ///	Sets a tag in the registry.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="value">The value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(Mod mod, string key, float value);
+        /// <summary>
+        ///	Sets a tag in the registry.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="value">The value of the tag</param>
+        /// <param name="roundDigits">The number of digits to round the value to or -1 to not round</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(Mod mod, string key, decimal value, int roundDigits = -1);
+        /// <summary>
+        ///	Sets a tag in the registry.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="value">The value of the tag</param>
+        /// <param name="roundDigits">The number of digits to round the value to or -1 to not round</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(Mod mod, string key, double value, int roundDigits = -1);
+        #endregion
 
+        #region Dynamic Tags
         /// <summary>
         ///	Sets a dynamically generated tag in the registry.
         /// </summary>
         /// <param name="mod">Your mod instance (for identifying your mod)</param>
         /// <param name="key">The name of the tag (case-insensitive)</param>
         /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="onlyWhenWorldReady">Only resolve if <see cref="Context.IsWorldReady"/></param>
         /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(Mod mod, string key, Func<string> resolver, bool onlyWhenWorldReady = false);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="onlyWhenWorldReady">Only resolve if <see cref="Context.IsWorldReady"/></param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(Mod mod, string key, Func<NetString> resolver, bool onlyWhenWorldReady = false);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="onlyWhenWorldReady">Only resolve if <see cref="Context.IsWorldReady"/></param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(Mod mod, string key, Func<int> resolver, bool onlyWhenWorldReady = false);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="onlyWhenWorldReady">Only resolve if <see cref="Context.IsWorldReady"/></param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(Mod mod, string key, Func<float> resolver, bool onlyWhenWorldReady = false);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="roundDigits">The number of digits to round the value to or -1 to not round</param>
+        /// <param name="onlyWhenWorldReady">Only resolve if <see cref="Context.IsWorldReady"/></param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(Mod mod, string key, Func<decimal> resolver, int roundDigits = -1, bool onlyWhenWorldReady = false);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="roundDigits">The number of digits to round the value to or -1 to not round</param>
+        /// <param name="onlyWhenWorldReady">Only resolve if <see cref="Context.IsWorldReady"/></param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(Mod mod, string key, Func<double> resolver, int roundDigits = -1, bool onlyWhenWorldReady = false);
+        #endregion
+
+        #region World Tags
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry that will only resolve if <see cref="Context.IsWorldReady"/>.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
+        bool SetWorldTag(Mod mod, string key, Func<string> resolver);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry that will only resolve if <see cref="Context.IsWorldReady"/>.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
+        bool SetWorldTag(Mod mod, string key, Func<NetString> resolver);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry that will only resolve if <see cref="Context.IsWorldReady"/>.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
+        bool SetWorldTag(Mod mod, string key, Func<int> resolver);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry that will only resolve if <see cref="Context.IsWorldReady"/>.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
+        bool SetWorldTag(Mod mod, string key, Func<float> resolver);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry that will only resolve if <see cref="Context.IsWorldReady"/>.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="roundDigits">The number of digits to round the value to or -1 to not round</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
+        bool SetWorldTag(Mod mod, string key, Func<decimal> resolver, int roundDigits = -1);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry that will only resolve if <see cref="Context.IsWorldReady"/>.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="roundDigits">The number of digits to round the value to or -1 to not round</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
+        bool SetWorldTag(Mod mod, string key, Func<double> resolver, int roundDigits = -1);
+        #endregion
 
         /// <summary>
         /// Removes a tag from the registry.
@@ -93,6 +230,10 @@ namespace SVRichPresence
         /// A string saying "None" that will be translated based on the user's language.
         /// </summary>
         string None { get; }
+        /// <summary>
+        /// A NetString saying "None" that will be translated based on the user's language.
+        /// </summary>
+        NetString NetNone { get; }
 
         /// <summary>
         /// A reference to Stardew Valley's internal presence string. This value is used for <c>{{ Activity }}</c>.
@@ -109,6 +250,7 @@ namespace SVRichPresence
 
     public interface ITagRegister
     {
+        #region Static Tags
         /// <summary>
         ///	Sets a tag in the registry.
         /// </summary>
@@ -116,12 +258,46 @@ namespace SVRichPresence
         /// <param name="value">The value of the tag</param>
         /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(string key, string value);
+        /// <summary>
+        ///	Sets a tag in the registry.
+        /// </summary>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="value">The value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(string key, NetString value);
+        /// <summary>
+        ///	Sets a tag in the registry.
+        /// </summary>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="value">The value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(string key, int value);
+        /// <summary>
+        ///	Sets a tag in the registry.
+        /// </summary>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="value">The value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(string key, float value);
+        /// <summary>
+        ///	Sets a tag in the registry.
+        /// </summary>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="value">The value of the tag</param>
+        /// <param name="roundDigits">The number of digits to round the value to or -1 to not round</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(string key, decimal value, int roundDigits = -1);
+        /// <summary>
+        ///	Sets a tag in the registry.
+        /// </summary>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="value">The value of the tag</param>
+        /// <param name="roundDigits">The number of digits to round the value to or -1 to not round</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(string key, double value, int roundDigits = -1);
+        #endregion
 
+        #region Dynamic Tags
         /// <summary>
         ///	Sets a dynamically generated tag in the registry.
         /// </summary>
@@ -130,11 +306,102 @@ namespace SVRichPresence
         /// <param name="onlyWhenWorldReady">Only resolve if <see cref="Context.IsWorldReady"/></param>
         /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(string key, Func<string> resolver, bool onlyWhenWorldReady = false);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry.
+        /// </summary>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="onlyWhenWorldReady">Only resolve if <see cref="Context.IsWorldReady"/></param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(string key, Func<NetString> resolver, bool onlyWhenWorldReady = false);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry.
+        /// </summary>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="onlyWhenWorldReady">Only resolve if <see cref="Context.IsWorldReady"/></param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(string key, Func<int> resolver, bool onlyWhenWorldReady = false);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry.
+        /// </summary>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="onlyWhenWorldReady">Only resolve if <see cref="Context.IsWorldReady"/></param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(string key, Func<float> resolver, bool onlyWhenWorldReady = false);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry.
+        /// </summary>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="roundDigits">The number of digits to round the value to or -1 to not round</param>
+        /// <param name="onlyWhenWorldReady">Only resolve if <see cref="Context.IsWorldReady"/></param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(string key, Func<decimal> resolver, int roundDigits = -1, bool onlyWhenWorldReady = false);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry.
+        /// </summary>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="roundDigits">The number of digits to round the value to or -1 to not round</param>
+        /// <param name="onlyWhenWorldReady">Only resolve if <see cref="Context.IsWorldReady"/></param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
         bool SetTag(string key, Func<double> resolver, int roundDigits = -1, bool onlyWhenWorldReady = false);
+        #endregion
+
+        #region World Tags
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry that will only resolve if <see cref="Context.IsWorldReady"/>.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
+        bool SetWorldTag(string key, Func<string> resolver);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry that will only resolve if <see cref="Context.IsWorldReady"/>.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
+        bool SetWorldTag(string key, Func<NetString> resolver);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry that will only resolve if <see cref="Context.IsWorldReady"/>.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
+        bool SetWorldTag(string key, Func<int> resolver);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry that will only resolve if <see cref="Context.IsWorldReady"/>.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
+        bool SetWorldTag(string key, Func<float> resolver);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry that will only resolve if <see cref="Context.IsWorldReady"/>.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="roundDigits">The number of digits to round the value to or -1 to not round</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
+        bool SetWorldTag(string key, Func<decimal> resolver, int roundDigits = -1);
+        /// <summary>
+        ///	Sets a dynamically generated tag in the registry that will only resolve if <see cref="Context.IsWorldReady"/>.
+        /// </summary>
+        /// <param name="mod">Your mod instance (for identifying your mod)</param>
+        /// <param name="key">The name of the tag (case-insensitive)</param>
+        /// <param name="resolver">A function that returns the value of the tag</param>
+        /// <param name="roundDigits">The number of digits to round the value to or -1 to not round</param>
+        /// <returns>Returns <c>true</c> if the tag was set or <c>false</c> if the tag is owned by another mod.</returns>
+        bool SetWorldTag(string key, Func<double> resolver, int roundDigits = -1);
+        #endregion
 
         /// <summary>
         /// Removes a tag from the registry.

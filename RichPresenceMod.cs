@@ -135,52 +135,50 @@ namespace SVRichPresence
             tagReg.SetTag("StardewVersion", () => Game1.version);
             tagReg.SetTag("Song", () => Utility.getSongTitleFromCueName(Game1.currentSong?.Name ?? api.None));
 
-            // All the tags below are only available while in-game.
+            tagReg.SetWorldTag("Name", () => Game1.player.Name);
+            tagReg.SetWorldTag("Farm", () => Game1.content.LoadString("Strings\\UI:Inventory_FarmName", api.GetTag("FarmName")));
+            tagReg.SetWorldTag("FarmName", () => Game1.player.farmName);
+            tagReg.SetWorldTag("PetName", () => Game1.player.hasPet() ? Game1.player.getPetDisplayName() : api.None);
+            tagReg.SetWorldTag("Location", () => Game1.currentLocation.Name);
+            tagReg.SetWorldTag("RomanticInterest", () => Utility.getTopRomanticInterest(Game1.player)?.getName() ?? api.None);
+            tagReg.SetWorldTag("NonRomanticInterest", () => Utility.getTopNonRomanticInterest(Game1.player)?.getName() ?? api.None);
 
-            tagReg.SetTag("Name", () => Game1.player.Name, true);
-            tagReg.SetTag("Farm", () => Game1.content.LoadString("Strings\\UI:Inventory_FarmName", api.GetTag("FarmName")), true);
-            tagReg.SetTag("FarmName", () => Game1.player.farmName, true);
-            tagReg.SetTag("PetName", () => Game1.player.hasPet() ? Game1.player.getPetDisplayName() : api.None, true);
-            tagReg.SetTag("Location", () => Game1.currentLocation.Name, true);
-            tagReg.SetTag("RomanticInterest", () => Utility.getTopRomanticInterest(Game1.player)?.getName() ?? api.None, true);
-
-            tagReg.SetTag("Money", () =>
+            tagReg.SetWorldTag("Money", () =>
             {
-                // Copied from LoadGameMenu
-                string text = Game1.content.LoadString("Strings\\StringsFromCSFiles:LoadGameMenu.cs.11020", Utility.getNumberWithCommas(Game1.player.Money));
+                // Copied from LoadGameMenu.drawSlotMoney
+                string cashText = Game1.content.LoadString("Strings\\StringsFromCSFiles:LoadGameMenu.cs.11020", Utility.getNumberWithCommas(Game1.player.Money));
                 if (Game1.player.Money == 1 && LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.pt)
-                    text = text.Substring(0, text.Length - 1);
-                return text;
-            }, true);
-            tagReg.SetTag("MoneyNumber", () => Game1.player.Money, true);
-            tagReg.SetTag("MoneyCommas", () => Utility.getNumberWithCommas(Game1.player.Money), true);
-            tagReg.SetTag("Level", () => Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", Game1.player.Level.ToString()), true);
-            tagReg.SetTag("LevelNumber", () => Game1.player.Level, true);
-            tagReg.SetTag("Title", () => Game1.player.getTitle(), true);
-            tagReg.SetTag("TotalTime", () => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed), true);
+                    cashText = cashText.Substring(0, cashText.Length - 1);
+                return cashText;
+            });
+            tagReg.SetWorldTag("MoneyCommas", () => Utility.getNumberWithCommas(Game1.player.Money));
+            tagReg.SetWorldTag("MoneyNumber", () => Game1.player.Money);
+            tagReg.SetWorldTag("Level", () => Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", Game1.player.Level.ToString()));
+            tagReg.SetWorldTag("LevelNumber", () => Game1.player.Level);
+            tagReg.SetWorldTag("Title", () => Game1.player.getTitle());
+            tagReg.SetWorldTag("TotalTime", () => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed));
 
-            tagReg.SetTag("Health", () => Game1.player.health, true);
-            tagReg.SetTag("HealthMax", () => Game1.player.maxHealth, true);
-            tagReg.SetTag("HealthPercent", () => (double)Game1.player.health / Game1.player.maxHealth * 100, 2, true);
-            tagReg.SetTag("Energy", () => Game1.player.Stamina.ToString(), true);
-            tagReg.SetTag("EnergyMax", () => Game1.player.MaxStamina, true);
-            tagReg.SetTag("EnergyPercent", () => (double)Game1.player.Stamina / Game1.player.MaxStamina * 100, 2, true);
+            tagReg.SetWorldTag("Health", () => Game1.player.health);
+            tagReg.SetWorldTag("HealthMax", () => Game1.player.maxHealth);
+            tagReg.SetWorldTag("HealthPercent", () => (double)Game1.player.health / Game1.player.maxHealth * 100, 2);
+            tagReg.SetWorldTag("Energy", () => Game1.player.Stamina.ToString());
+            tagReg.SetWorldTag("EnergyMax", () => Game1.player.MaxStamina);
+            tagReg.SetWorldTag("EnergyPercent", () => (double)Game1.player.Stamina / Game1.player.MaxStamina * 100, 2);
 
-            tagReg.SetTag("Time", () => Game1.getTimeOfDayString(Game1.timeOfDay), true);
-            tagReg.SetTag("Date", () => Utility.getDateString(), true);
-            tagReg.SetTag("Season", () => Utility.getSeasonNameFromNumber(Utility.getSeasonNumber(SDate.Now().Season)), true);
-            tagReg.SetTag("DayOfWeek", () => Game1.shortDayDisplayNameFromDayOfSeason(SDate.Now().Day), true);
+            tagReg.SetWorldTag("Time", () => Game1.getTimeOfDayString(Game1.timeOfDay));
+            tagReg.SetWorldTag("Date", () => Utility.getDateString());
+            tagReg.SetWorldTag("Season", () => Utility.getSeasonNameFromNumber(SDate.Now().SeasonIndex));
+            tagReg.SetWorldTag("DayOfWeek", () => Game1.shortDayDisplayNameFromDayOfSeason(SDate.Now().Day));
 
-            tagReg.SetTag("Day", () => SDate.Now().Day, true);
-            tagReg.SetTag("DayPad", () => $"{SDate.Now().Day:00}", true);
-            tagReg.SetTag("DaySuffix", () => Utility.getNumberEnding(SDate.Now().Day), true);
-            tagReg.SetTag("Year", () => SDate.Now().Year, true);
-            tagReg.SetTag("YearSuffix", () => Utility.getNumberEnding(SDate.Now().Year), true);
+            tagReg.SetWorldTag("Day", () => SDate.Now().Day);
+            tagReg.SetWorldTag("DayPad", () => $"{SDate.Now().Day:00}");
+            tagReg.SetWorldTag("DaySuffix", () => Utility.getNumberEnding(SDate.Now().Day));
+            tagReg.SetWorldTag("Year", () => SDate.Now().Year);
+            tagReg.SetWorldTag("YearSuffix", () => Utility.getNumberEnding(SDate.Now().Year));
 
-            tagReg.SetTag("GameVerb", () =>
-                Context.IsMultiplayer && Context.IsMainPlayer ? "Hosting" : "Playing", true);
-            tagReg.SetTag("GameNoun", () => Context.IsMultiplayer ? "Co-op" : "Solo", true);
-            tagReg.SetTag("GameInfo", () => api.GetTag("GameVerb") + " " + api.GetTag("GameNoun"), true);
+            tagReg.SetWorldTag("GameVerb", () => Context.IsMultiplayer && Context.IsMainPlayer ? "Hosting" : "Playing");
+            tagReg.SetWorldTag("GameNoun", () => Context.IsMultiplayer ? "Co-op" : "Solo");
+            tagReg.SetWorldTag("GameInfo", () => api.GetTag("GameVerb") + " " + api.GetTag("GameNoun"));
             #endregion
         }
 

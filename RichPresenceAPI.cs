@@ -17,6 +17,7 @@ namespace SVRichPresence
             RPMod = mod;
         }
 
+        #region Static Tags
         public bool SetTag(Mod mod, string key, string value) =>
             SetTag(mod, key, () => value);
         public bool SetTag(Mod mod, string key, NetString value) =>
@@ -29,7 +30,9 @@ namespace SVRichPresence
             SetTag(mod, key, () => value, roundDigits);
         public bool SetTag(Mod mod, string key, double value, int roundDigits = -1) =>
             SetTag(mod, key, () => value, roundDigits);
+        #endregion
 
+        #region Dynamic Tags
         public bool SetTag(Mod mod, string key, Func<string> resolver, bool onlyWhenWorldReady = false)
         {
             string modID = mod.ModManifest.UniqueID;
@@ -69,6 +72,22 @@ namespace SVRichPresence
                     return Math.Round(val, roundDigits).ToString();
                 else return val.ToString();
             }, onlyWhenWorldReady);
+        #endregion
+
+        #region World Tags
+        public bool SetWorldTag(Mod mod, string key, Func<string> resolver) =>
+            SetTag(mod, key, resolver, true);
+        public bool SetWorldTag(Mod mod, string key, Func<NetString> resolver) =>
+            SetTag(mod, key, resolver, true);
+        public bool SetWorldTag(Mod mod, string key, Func<int> resolver) =>
+            SetTag(mod, key, resolver, true);
+        public bool SetWorldTag(Mod mod, string key, Func<float> resolver) =>
+            SetTag(mod, key, resolver, true);
+        public bool SetWorldTag(Mod mod, string key, Func<decimal> resolver, int roundDigits = -1) =>
+            SetTag(mod, key, resolver, roundDigits, true);
+        public bool SetWorldTag(Mod mod, string key, Func<double> resolver, int roundDigits = -1) =>
+            SetTag(mod, key, resolver, roundDigits, true);
+        #endregion
 
         public bool RemoveTag(Mod mod, string key)
         {
@@ -113,6 +132,7 @@ namespace SVRichPresence
         public ITagRegister GetTagRegister(Mod mod) => new TagRegister(this, mod);
 
         public string None => Game1.content.LoadString("Strings\\UI:Character_none");
+        public NetString NetNone => new(None);
 
         public string GamePresence
         {
@@ -166,6 +186,7 @@ namespace SVRichPresence
             this.mod = mod;
         }
 
+        #region Static Tags
         public bool SetTag(string key, string value) =>
             api.SetTag(mod, key, value);
         public bool SetTag(string key, NetString value) =>
@@ -178,7 +199,9 @@ namespace SVRichPresence
             api.SetTag(mod, key, value, roundDigits);
         public bool SetTag(string key, double value, int roundDigits = -1) =>
             api.SetTag(mod, key, value, roundDigits);
+        #endregion
 
+        #region Dynamic Tags
         public bool SetTag(string key, Func<string> resolver, bool onlyWhenWorldReady = false) =>
             api.SetTag(mod, key, resolver, onlyWhenWorldReady);
         public bool SetTag(string key, Func<NetString> resolver, bool onlyWhenWorldReady = false) =>
@@ -191,6 +214,22 @@ namespace SVRichPresence
             api.SetTag(mod, key, resolver, roundDigits, onlyWhenWorldReady);
         public bool SetTag(string key, Func<double> resolver, int roundDigits = -1, bool onlyWhenWorldReady = false) =>
             api.SetTag(mod, key, resolver, roundDigits, onlyWhenWorldReady);
+        #endregion
+
+        #region World Tags
+        public bool SetWorldTag(string key, Func<string> resolver) =>
+            api.SetWorldTag(mod, key, resolver);
+        public bool SetWorldTag(string key, Func<NetString> resolver) =>
+            api.SetWorldTag(mod, key, resolver);
+        public bool SetWorldTag(string key, Func<int> resolver) =>
+            api.SetWorldTag(mod, key, resolver);
+        public bool SetWorldTag(string key, Func<float> resolver) =>
+            api.SetWorldTag(mod, key, resolver);
+        public bool SetWorldTag(string key, Func<decimal> resolver, int roundDigits = -1) =>
+            api.SetWorldTag(mod, key, resolver, roundDigits);
+        public bool SetWorldTag(string key, Func<double> resolver, int roundDigits = -1) =>
+            api.SetWorldTag(mod, key, resolver, roundDigits);
+        #endregion
 
         public bool RemoveTag(string key) =>
             api.RemoveTag(mod, key);
