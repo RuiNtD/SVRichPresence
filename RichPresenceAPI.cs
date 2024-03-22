@@ -1,140 +1,114 @@
-﻿using Netcode;
-using StardewModdingAPI;
+﻿using StardewModdingAPI;
 using StardewValley;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
+using static SVRichPresence.IRichPresenceAPI;
 
 namespace SVRichPresence {
   public class RichPresenceAPI : IRichPresenceAPI {
-    private readonly IDictionary<string, Tag> tags = new Dictionary<string, Tag>(StringComparer.InvariantCultureIgnoreCase);
+    private readonly Dictionary<string, Tag> reg = new(StringComparer.InvariantCultureIgnoreCase);
     private readonly RichPresenceMod RPMod;
-
-    private readonly bool DEBUG = true;
 
     public RichPresenceAPI(RichPresenceMod mod) {
       RPMod = mod;
 #if DEBUG
-      tags["test1"] = new Tag {
+      reg["test1"] = new Tag {
         owner = "test1",
-        resolver = () => "hello"
+        func = () => "hello"
       };
-      tags["test2"] = new Tag {
+      reg["test2"] = new Tag {
         owner = "test1",
-        resolver = () => "world"
+        func = () => "world"
       };
-      tags["test3"] = new Tag {
+      reg["test3"] = new Tag {
         owner = "test2",
-        resolver = () => "testy"
+        func = () => "test"
+      };
+      reg["thrower"] = new Tag {
+        owner = "test2",
+        func = () => throw new Exception("test")
+      };
+      reg["nuller"] = new Tag {
+        owner = "test2",
+        func = () => null
       };
 #endif
     }
 
-    #region Static Tags
-    public bool SetTag(Mod mod, string key, string value) =>
-      SetTag(mod, key, () => value);
-    public bool SetTag(Mod mod, string key, NetString value) =>
-      SetTag(mod, key, () => value);
-    public bool SetTag(Mod mod, string key, int value) =>
-      SetTag(mod, key, () => value);
-    public bool SetTag(Mod mod, string key, float value) =>
-      SetTag(mod, key, () => value);
-    public bool SetTag(Mod mod, string key, decimal value, int roundDigits = -1) =>
-      SetTag(mod, key, () => value, roundDigits);
-    public bool SetTag(Mod mod, string key, double value, int roundDigits = -1) =>
-      SetTag(mod, key, () => value, roundDigits);
-    #endregion
-
-    #region Dynamic Tags
-    public bool SetTag(Mod mod, string key, Func<string> resolver, bool onlyWhenWorldReady = false) {
-      string modID = mod.ModManifest.UniqueID;
+    public bool SetTag(IManifest mod, string key, Func<string> func) {
+      string modID = mod.UniqueID;
       if (TagExists(key) && GetTagOwner(key) != modID)
         return false;
-      tags[key] = new Tag {
-        owner = modID,
-        resolver = () => {
-          if (onlyWhenWorldReady && !Context.IsWorldReady)
-            return null;
-          return resolver.Invoke();
-        }
-      };
+      reg[key] = new Tag { owner = modID, func = func };
       return true;
     }
-    public bool SetTag(Mod mod, string key, Func<NetString> resolver, bool onlyWhenWorldReady = false) =>
-      SetTag(mod, key, () => resolver.Invoke().ToString(), onlyWhenWorldReady);
-    public bool SetTag(Mod mod, string key, Func<int> resolver, bool onlyWhenWorldReady = false) =>
-      SetTag(mod, key, () => resolver.Invoke().ToString(), onlyWhenWorldReady);
-    public bool SetTag(Mod mod, string key, Func<float> resolver, bool onlyWhenWorldReady = false) =>
-      SetTag(mod, key, () => resolver.Invoke().ToString(), onlyWhenWorldReady);
-    public bool SetTag(Mod mod, string key, Func<decimal> resolver, int roundDigits = -1, bool onlyWhenWorldReady = false) =>
-      SetTag(mod, key, () => {
-        decimal val = resolver.Invoke();
-        if (roundDigits >= 0)
-          return Math.Round(val, roundDigits).ToString();
-        else return val.ToString();
-      }, onlyWhenWorldReady);
-    public bool SetTag(Mod mod, string key, Func<double> resolver, int roundDigits = -1, bool onlyWhenWorldReady = false) =>
-      SetTag(mod, key, () => {
-        double val = resolver.Invoke();
-        if (roundDigits >= 0)
-          return Math.Round(val, roundDigits).ToString();
-        else return val.ToString();
-      }, onlyWhenWorldReady);
-    #endregion
 
-    #region World Tags
-    public bool SetWorldTag(Mod mod, string key, Func<string> resolver) =>
-      SetTag(mod, key, resolver, true);
-    public bool SetWorldTag(Mod mod, string key, Func<NetString> resolver) =>
-      SetTag(mod, key, resolver, true);
-    public bool SetWorldTag(Mod mod, string key, Func<int> resolver) =>
-      SetTag(mod, key, resolver, true);
-    public bool SetWorldTag(Mod mod, string key, Func<float> resolver) =>
-      SetTag(mod, key, resolver, true);
-    public bool SetWorldTag(Mod mod, string key, Func<decimal> resolver, int roundDigits = -1) =>
-      SetTag(mod, key, resolver, roundDigits, true);
-    public bool SetWorldTag(Mod mod, string key, Func<double> resolver, int roundDigits = -1) =>
-      SetTag(mod, key, resolver, roundDigits, true);
-    #endregion
-
-    public bool RemoveTag(Mod mod, string key) {
-      if (!TagExists(key))
+    public bool RemoveTag(IManifest mod, string key) {
+      string modID = mod.UniqueID;
+      if (!reg.ContainsKey(modID))
         return true;
-      if (GetTagOwner(key) != mod.ModManifest.UniqueID)
+      if (GetTagOwner(key) != modID)
         return false;
-      tags.Remove(key);
+      reg.Remove(key);
       return true;
     }
 
-    public string GetTag(string key) => tags[key]?.Resolve() ?? null;
-
-    public string GetTagThrow(string key) => tags[key]?.resolver.Invoke() ?? null;
-
-    public bool TagExists(string key) => tags.ContainsKey(key);
-
-    public string GetTagOwner(string key) => tags[key]?.owner ?? null;
-
-    public IDictionary<string, string> ListTags(string replaceNull = null, string replaceException = null, bool removeNull = true) {
-      IDictionary<string, string> list =
-          new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-      foreach (KeyValuePair<string, Tag> tag in tags) {
-        string value;
-        try {
-          value = tag.Value.resolver.Invoke();
-        } catch {
-          value = replaceException;
-        }
-        value ??= replaceNull;
-        if (value != null || !removeNull)
-          list[tag.Key] = value;
+    public IResolvedTag ResolveTag(string key) {
+      Tag tag = reg[key];
+      if (tag == null) return null;
+      try {
+        string val = tag.func();
+        return new ResolvedTag(val);
+      } catch (Exception e) {
+        return new ResolvedTag(e);
       }
-      return list;
     }
 
-    public ITagRegister GetTagRegister(Mod mod) => new TagRegister(this, mod);
+    public string FormatTag(string key, string replaceError = null, string replaceNull = null) {
+      IResolvedTag res = ResolveTag(key);
+      if (!res.Success) return replaceError;
+      return res.Value ?? replaceNull;
+    }
+
+    public bool TagExists(string key) => reg.ContainsKey(key);
+
+    public string GetTagOwner(string key) => reg[key]?.owner ?? null;
+
+    public IDictionary<string, IResolvedTag> ResolveAllTags() {
+      return reg.ToDictionary(
+        pair => pair.Key,
+        pair => ResolveTag(pair.Key),
+        StringComparer.InvariantCultureIgnoreCase
+      );
+    }
+
+    public IDictionary<string, string> FormatAllTags(string replaceErrors = null, string replaceNulls = null) {
+      var output = new Dictionary<string, string>();
+
+      foreach (var tag in ResolveAllTags()) {
+        var val = FormatTag(tag.Key, replaceErrors, replaceNulls);
+        if (val is null) continue;
+        output[tag.Key] = val;
+      }
+
+      return output;
+    }
+
+    public class ResolvedTag : IRichPresenceAPI.IResolvedTag {
+      public ResolvedTag(string val) { value = val; }
+      public ResolvedTag(Exception e) { exception = e; }
+
+      private readonly string value;
+      private readonly Exception exception;
+
+      public bool Success => exception == null;
+      public string Value => value;
+      public Exception Exception => exception;
+    }
 
     public string None => Game1.content.LoadString("Strings\\UI:Character_none");
-    public NetString NetNone => new(None);
 
     public string GamePresence {
       get => RPMod.Helper.Reflection.GetField<string>
@@ -143,87 +117,29 @@ namespace SVRichPresence {
           (typeof(Game1), "debugPresenceString").SetValue(value);
     }
 
-    public string FormatText(string text) {
-      if (text.Length == 0)
-        return "";
-
+    public string FormatText(string text, string replaceError = null, string replaceNull = null) {
       // Code is copied and modified from SMAPI.
-      IDictionary<string, string> tags = ListTags();
-      return Regex.Replace(text, @"{{([ \w\.\-]+)}}", match => {
+      IDictionary<string, IResolvedTag> tags = ResolveAllTags();
+      return Regex.Replace(text, @"{{?([ \w\.\-]+)}}?", match => {
+        string orig = match.Value;
         string key = match.Groups[1].Value.Trim();
-        return tags.TryGetValue(key, out string value)
-            ? value : match.Value;
+        string formatted = FormatTag(key, replaceError, replaceNull);
+        if (formatted == null)
+          return orig;
+        return formatted;
       });
     }
 
+    public Func<string> ReqWorld(Func<string> func) =>
+      () => {
+        if (!Context.IsWorldReady)
+          return null;
+        return func();
+      };
+
     private class Tag {
       public string owner;
-      public Func<string> resolver;
-      public string Resolve() {
-        try {
-          return resolver.Invoke();
-        } catch {
-          return null;
-        }
-      }
+      public Func<string> func;
     }
-  }
-
-  public class TagRegister : ITagRegister {
-    private readonly RichPresenceAPI api;
-    private readonly Mod mod;
-
-    public TagRegister(RichPresenceAPI api, Mod mod) {
-      this.api = api;
-      this.mod = mod;
-    }
-
-    #region Static Tags
-    public bool SetTag(string key, string value) =>
-      api.SetTag(mod, key, value);
-    public bool SetTag(string key, NetString value) =>
-      api.SetTag(mod, key, value);
-    public bool SetTag(string key, int value) =>
-      api.SetTag(mod, key, value);
-    public bool SetTag(string key, float value) =>
-      api.SetTag(mod, key, value);
-    public bool SetTag(string key, decimal value, int roundDigits = -1) =>
-      api.SetTag(mod, key, value, roundDigits);
-    public bool SetTag(string key, double value, int roundDigits = -1) =>
-      api.SetTag(mod, key, value, roundDigits);
-    #endregion
-
-    #region Dynamic Tags
-    public bool SetTag(string key, Func<string> resolver, bool onlyWhenWorldReady = false) =>
-      api.SetTag(mod, key, resolver, onlyWhenWorldReady);
-    public bool SetTag(string key, Func<NetString> resolver, bool onlyWhenWorldReady = false) =>
-      api.SetTag(mod, key, resolver, onlyWhenWorldReady);
-    public bool SetTag(string key, Func<int> resolver, bool onlyWhenWorldReady = false) =>
-      api.SetTag(mod, key, resolver, onlyWhenWorldReady);
-    public bool SetTag(string key, Func<float> resolver, bool onlyWhenWorldReady = false) =>
-      api.SetTag(mod, key, resolver, onlyWhenWorldReady);
-    public bool SetTag(string key, Func<decimal> resolver, int roundDigits = -1, bool onlyWhenWorldReady = false) =>
-      api.SetTag(mod, key, resolver, roundDigits, onlyWhenWorldReady);
-    public bool SetTag(string key, Func<double> resolver, int roundDigits = -1, bool onlyWhenWorldReady = false) =>
-      api.SetTag(mod, key, resolver, roundDigits, onlyWhenWorldReady);
-    #endregion
-
-    #region World Tags
-    public bool SetWorldTag(string key, Func<string> resolver) =>
-      api.SetWorldTag(mod, key, resolver);
-    public bool SetWorldTag(string key, Func<NetString> resolver) =>
-      api.SetWorldTag(mod, key, resolver);
-    public bool SetWorldTag(string key, Func<int> resolver) =>
-      api.SetWorldTag(mod, key, resolver);
-    public bool SetWorldTag(string key, Func<float> resolver) =>
-      api.SetWorldTag(mod, key, resolver);
-    public bool SetWorldTag(string key, Func<decimal> resolver, int roundDigits = -1) =>
-      api.SetWorldTag(mod, key, resolver, roundDigits);
-    public bool SetWorldTag(string key, Func<double> resolver, int roundDigits = -1) =>
-      api.SetWorldTag(mod, key, resolver, roundDigits);
-    #endregion
-
-    public bool RemoveTag(string key) =>
-        api.RemoveTag(mod, key);
   }
 }

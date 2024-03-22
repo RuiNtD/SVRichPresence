@@ -13,7 +13,7 @@ namespace SVRichPresence {
     public bool ForceSmallImage = false;
     public string State = "In Menus";
     public string Details = "";
-    public string LargeImageText = "{{ Activity }}";
+    public string LargeImageText = "{Activity}";
     public string SmallImageText = "";
   }
 
@@ -24,9 +24,9 @@ namespace SVRichPresence {
     public bool ShowPlayTime = true;
 
     public GamePresence() {
-      State = "{{ GameInfo }}";
-      Details = "{{ Farm }} | {{ Money }}";
-      SmallImageText = "{{ Date }}";
+      State = "{GameInfo}";
+      Details = "{Farm} | {Money}";
+      SmallImageText = "{Date}";
     }
   }
 }

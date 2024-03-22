@@ -4,9 +4,14 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
+using StardewValley.Buildings;
+using StardewValley.Locations;
+using StardewValley.Tools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
+using static System.Net.Mime.MediaTypeNames;
 using Constants = StardewModdingAPI.Constants;
 using LogLevel = StardewModdingAPI.LogLevel;
 using Utility = StardewValley.Utility;
@@ -48,58 +53,19 @@ namespace SVRichPresence {
       Helper.ConsoleCommands.Add("DiscordFormat",
         "Formats and prints a provided configuration string.",
         (string command, string[] args) => {
-          string text = api.FormatText(string.Join(" ", args));
+          string text = this.api.FormatText(string.Join(" ", args));
           Monitor.Log("Result: " + text, LogLevel.Info);
         }
       );
       Helper.ConsoleCommands.Add("DiscordTags",
         "Lists tags usable for configuration strings.",
         (string command, string[] args) => {
-          IDictionary<string, string> tags =
-            string.Join("", args).ToLower().StartsWith("all")
-            ? api.ListTags("[NULL]", "[ERROR]")
-            : api.ListTags(removeNull: false);
-
-          IDictionary<string, IDictionary<string, string>> groups =
-            new Dictionary<string, IDictionary<string, string>>();
-          foreach (KeyValuePair<string, string> tag in tags) {
-            string owner = api.GetTagOwner(tag.Key) ?? "Unknown-Mod";
-            if (!groups.ContainsKey(owner))
-              groups[owner] = new Dictionary<string, string>();
-            groups[owner][tag.Key] = tag.Value;
-          }
-
-          IList<string> output = new List<string>(tags.Count + groups.Count) {
-            "Available Tags:"
-          };
-          int longest = 0;
-          foreach (KeyValuePair<string, string> tag in groups[ModManifest.UniqueID])
-            if (tag.Value != null)
-              longest = Math.Max(longest, tag.Key.Length);
-
-          int nulls = 0;
-          foreach (KeyValuePair<string, string> tag in groups[ModManifest.UniqueID])
-            if (tag.Value is null) nulls++;
-            else output.Add("  {{ " + tag.Key.PadLeft(longest) + " }}: " + tag.Value);
-
-          foreach (KeyValuePair<string, IDictionary<string, string>> group in groups) {
-            if (group.Key == ModManifest.UniqueID) continue;
-            string head = group.Value.Count + " tag";
-            if (group.Value.Count != 1) head += "s";
-            head += " from " + (Helper.ModRegistry.Get(group.Key)?.Manifest.Name ?? "an unknown mod");
-            output.Add(head);
-
-            longest = 0;
-            foreach (KeyValuePair<string, string> tag in group.Value)
-              if (tag.Value != null)
-                longest = Math.Max(longest, tag.Key.Length);
-            foreach (KeyValuePair<string, string> tag in group.Value)
-              if (tag.Value == null) nulls++;
-              else output.Add("  {{ " + tag.Key.PadLeft(longest) + " }}: " + tag.Value);
-          }
+          bool all = string.Join("", args).ToLower().StartsWith("all");
+          string output = "Available tags:\n";
+          output += FormatTags(out _, out int nulls, format: "  {{{0}}}: {1}", pad: true, all: all);
           if (nulls > 0)
-            output.Add(nulls + " tag" + (nulls != 1 ? "s" : "") + " unavailable; type `DiscordTags all` to show all");
-          Monitor.Log(string.Join(Environment.NewLine, output), LogLevel.Info);
+            output += $"\n\n{nulls} tag{(nulls != 1 ? "s" : "")} unavailable; type `DiscordTags all` to show all";
+          Monitor.Log(output, LogLevel.Info);
         }
       );
       #endregion
@@ -119,67 +85,126 @@ namespace SVRichPresence {
         timestampSession = Timestamps.Now;
       };
 
-      ITagRegister tagReg = api.GetTagRegister(this);
-
       #region Default Tags
-      
-      tagReg.SetTag("Activity", () => api.GamePresence);
-      tagReg.SetTag("ModCount", () => Helper.ModRegistry.GetAll().Count());
-      tagReg.SetTag("SMAPIVersion", () => Constants.ApiVersion.ToString());
-      tagReg.SetTag("StardewVersion", () => Game1.version);
-      tagReg.SetTag("Song", () => Utility.getSongTitleFromCueName(Game1.currentSong?.Name ?? api.None));
+      var mod = ModManifest;
+      var ReqWorld = api.ReqWorld;
+      var None = api.None;
+      var SetTag = api.SetTag;
 
-      tagReg.SetWorldTag("Name", () => Game1.player.Name);
-      tagReg.SetWorldTag("Farm", () => Game1.content.LoadString("Strings\\UI:Inventory_FarmName", api.GetTag("FarmName")));
-      tagReg.SetWorldTag("FarmName", () => Game1.player.farmName);
-      tagReg.SetWorldTag("PetName", () => Game1.player.hasPet() ? Game1.player.getPetDisplayName() : api.None);
-      tagReg.SetWorldTag("Location", () => Game1.currentLocation.Name);
-      tagReg.SetWorldTag("RomanticInterest", () => Utility.getTopRomanticInterest(Game1.player)?.getName() ?? api.None);
-      tagReg.SetWorldTag("NonRomanticInterest", () => Utility.getTopNonRomanticInterest(Game1.player)?.getName() ?? api.None);
+      SetTag(mod, "Activity", () => api.GamePresence);
+      SetTag(mod, "ModCount", () => Helper.ModRegistry.GetAll().Count().ToString());
+      SetTag(mod, "SMAPIVersion", () => Constants.ApiVersion.ToString());
+      SetTag(mod, "StardewVersion", () => Game1.version);
+      SetTag(mod, "RPCModVersion", () => ModManifest.Version.ToString());
+      SetTag(mod, "Song", () => Utility.getSongTitleFromCueName(Game1.currentSong?.Name ?? None));
 
-      tagReg.SetWorldTag("Money", () => {
+      SetTag(mod, "Name", ReqWorld(() => Game1.player.Name));
+      SetTag(mod, "Farm", ReqWorld(() => Game1.content.LoadString("Strings\\UI:Inventory_FarmName", api.FormatTag("FarmName"))));
+      SetTag(mod, "FarmName", ReqWorld(() => Game1.player.farmName.ToString()));
+      SetTag(mod, "PetName", ReqWorld(() => Game1.player.hasPet() ? Game1.player.getPetDisplayName() : None));
+      SetTag(mod, "Location", ReqWorld(() => Game1.currentLocation.Name));
+      SetTag(mod, "RomanticInterest", ReqWorld(() => Utility.getTopRomanticInterest(Game1.player)?.getName() ?? None));
+      SetTag(mod, "NonRomanticInterest", ReqWorld(() => Utility.getTopNonRomanticInterest(Game1.player)?.getName() ?? None));
+
+      SetTag(mod, "Money", ReqWorld(() => {
         // Copied from LoadGameMenu.drawSlotMoney
         string cashText = Game1.content.LoadString("Strings\\StringsFromCSFiles:LoadGameMenu.cs.11020", Utility.getNumberWithCommas(Game1.player.Money));
         if (Game1.player.Money == 1 && LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.pt)
           cashText = cashText[..^1];
         return cashText;
-      });
-      tagReg.SetWorldTag("MoneyCommas", () => Utility.getNumberWithCommas(Game1.player.Money));
-      tagReg.SetWorldTag("MoneyNumber", () => Game1.player.Money);
-      tagReg.SetWorldTag("Level", () => Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", Game1.player.Level.ToString()));
-      tagReg.SetWorldTag("LevelNumber", () => Game1.player.Level);
-      tagReg.SetWorldTag("Title", () => Game1.player.getTitle());
-      tagReg.SetWorldTag("TotalTime", () => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed));
+      }));
+      SetTag(mod, "MoneyCommas", ReqWorld(() => Utility.getNumberWithCommas(Game1.player.Money)));
+      SetTag(mod, "MoneyNumber", ReqWorld(() => Game1.player.Money.ToString()));
+      SetTag(mod, "Level", ReqWorld(() => Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", Game1.player.Level.ToString())));
+      SetTag(mod, "LevelNumber", ReqWorld(() => Game1.player.Level.ToString()));
+      SetTag(mod, "Title", ReqWorld(() => Game1.player.getTitle().ToString()));
+      SetTag(mod, "TotalTime", ReqWorld(() => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed)));
 
-      tagReg.SetWorldTag("Health", () => Game1.player.health);
-      tagReg.SetWorldTag("HealthMax", () => Game1.player.maxHealth);
-      tagReg.SetWorldTag("HealthPercent", () => (double)Game1.player.health / Game1.player.maxHealth * 100, 2);
-      tagReg.SetWorldTag("Energy", () => Game1.player.Stamina.ToString());
-      tagReg.SetWorldTag("EnergyMax", () => Game1.player.MaxStamina);
-      tagReg.SetWorldTag("EnergyPercent", () => (double)Game1.player.Stamina / Game1.player.MaxStamina * 100, 2);
+      SetTag(mod, "Health", ReqWorld(() => Game1.player.health.ToString()));
+      SetTag(mod, "HealthMax", ReqWorld(() => Game1.player.maxHealth.ToString()));
+      SetTag(mod, "HealthPercent", ReqWorld(() => Math.Round((double)Game1.player.health / Game1.player.maxHealth * 100, 2).ToString()));
+      SetTag(mod, "Energy", ReqWorld(() => Game1.player.Stamina.ToString()));
+      SetTag(mod, "EnergyMax", ReqWorld(() => Game1.player.MaxStamina.ToString()));
+      SetTag(mod, "EnergyPercent", ReqWorld(() => Math.Round((double)Game1.player.Stamina / Game1.player.MaxStamina * 100, 2).ToString()));
 
-      tagReg.SetWorldTag("Time", () => Game1.getTimeOfDayString(Game1.timeOfDay));
-      tagReg.SetWorldTag("Date", () => Utility.getDateString());
-      tagReg.SetWorldTag("Season", () => Utility.getSeasonNameFromNumber(SDate.Now().SeasonIndex));
-      tagReg.SetWorldTag("DayOfWeek", () => Game1.shortDayDisplayNameFromDayOfSeason(SDate.Now().Day));
+      SetTag(mod, "Time", ReqWorld(() => Game1.getTimeOfDayString(Game1.timeOfDay)));
+      SetTag(mod, "Date", ReqWorld(() => Utility.getDateString()));
+      SetTag(mod, "Season", ReqWorld(() => Utility.getSeasonNameFromNumber(SDate.Now().SeasonIndex)));
+      SetTag(mod, "DayOfWeek", ReqWorld(() => Game1.shortDayDisplayNameFromDayOfSeason(SDate.Now().Day)));
 
-      tagReg.SetWorldTag("Day", () => SDate.Now().Day);
-      tagReg.SetWorldTag("DayPad", () => $"{SDate.Now().Day:00}");
-      tagReg.SetWorldTag("DaySuffix", () => Utility.getNumberEnding(SDate.Now().Day));
-      tagReg.SetWorldTag("Year", () => SDate.Now().Year);
-      tagReg.SetWorldTag("YearSuffix", () => Utility.getNumberEnding(SDate.Now().Year));
+      SetTag(mod, "Day", ReqWorld(() => SDate.Now().Day.ToString()));
+      SetTag(mod, "DayPad", ReqWorld(() => $"{SDate.Now().Day:00}"));
+      SetTag(mod, "DaySuffix", ReqWorld(() => Utility.getNumberEnding(SDate.Now().Day)));
+      SetTag(mod, "Year", ReqWorld(() => SDate.Now().Year.ToString()));
+      SetTag(mod, "YearSuffix", ReqWorld(() => Utility.getNumberEnding(SDate.Now().Year)));
 
-      tagReg.SetWorldTag("GameVerb", () => Context.IsMultiplayer && Context.IsMainPlayer ? "Hosting" : "Playing");
-      tagReg.SetWorldTag("GameNoun", () => Context.IsMultiplayer ? "Co-op" : "Solo");
-      tagReg.SetWorldTag("GameInfo", () => api.GetTag("GameVerb") + " " + api.GetTag("GameNoun"));
+      SetTag(mod, "GameVerb", ReqWorld(() => Context.IsMultiplayer && Context.IsMainPlayer ? "Hosting" : "Playing"));
+      SetTag(mod, "GameNoun", ReqWorld(() => Context.IsMultiplayer ? "Co-op" : "Solo"));
+      SetTag(mod, "GameInfo", ReqWorld(() => api.ResolveTag("GameVerb") + " " + api.ResolveTag("GameNoun")));
       #endregion
     }
+
+    private string FormatTags(out int count, out int nulls, string format = "{{{0}}}: {1}", bool pad = false, bool all = false) {
+      var tags = api.ResolveAllTags();
+      nulls = 0;
+      count = 0;
+
+      Dictionary<string, Dictionary<string, string>> groups = new();
+      foreach (var tag in tags) {
+        string owner = api.GetTagOwner(tag.Key) ?? "";
+        owner = Helper.ModRegistry.Get(owner)?.Manifest.Name ?? "";
+
+        if (!groups.ContainsKey(owner))
+          groups[owner] = new();
+
+        var val = tag.Value.Value;
+        if (!all && val is null) nulls++;
+        else {
+          val ??= "[NULL]";
+          if (!tag.Value.Success) val = "[ERROR]";
+          groups[owner][tag.Key] = val;
+          count++;
+        }
+      }
+
+      List<string> output = new(tags.Count + groups.Count);
+      void list(Dictionary<string, string> group) {
+        int longest = 0;
+        if (pad)
+          foreach (var tag in group)
+            longest = Math.Max(longest, tag.Key.Length);
+        foreach (var tag in group)
+          output.Add(String.Format(format, tag.Key.PadLeft(longest), tag.Value));
+      }
+      void section(Dictionary<string, string> group, string name) {
+        var count = group.Count;
+        if (count == 0) return;
+
+        string head = $"{count} tag";
+        if (count != 1) head += "s";
+        head += $" from {name}:";
+        output.Add("");
+        output.Add(head);
+
+        list(group);
+      }
+      list(groups[ModManifest.Name]);
+
+      foreach (var group in groups) {
+        if (group.Key == ModManifest.Name) continue;
+        if (group.Key == "") continue;
+        section(group.Value, group.Key);
+      }
+      section(groups[""], "unknown mods");
+
+      return string.Join("\n", output);
+  }
 
     public override object GetApi() => api;
 
     private void RegisterConfigMenu(object sender, GameLaunchedEventArgs e) {
       // get Generic Mod Config Menu's API (if it's installed)
-      var configMenu = this.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
+      var configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
       if (configMenu is null) return;
       var mod = ModManifest;
 
@@ -190,23 +215,23 @@ namespace SVRichPresence {
 
       configMenu.AddBoolOption(mod,
           name: () => "Show global playtime",
-          getValue: () => this.Config.ShowGlobalPlayTime,
-          setValue: value => this.Config.ShowGlobalPlayTime = value
+          getValue: () => Config.ShowGlobalPlayTime,
+          setValue: value => Config.ShowGlobalPlayTime = value
       );
       configMenu.AddBoolOption(mod,
           name: () => "Add Get Mod Button",
           tooltip: () => "Support the mod by adding a link to it on your rich presence.",
-          getValue: () => this.Config.AddGetModButton,
-          setValue: value => this.Config.AddGetModButton = value
+          getValue: () => Config.AddGetModButton,
+          setValue: value => Config.AddGetModButton = value
       );
 
       configMenu.AddSectionTitle(mod, () => "Preview");
       configMenu.AddParagraph(mod, () => {
-        var text = this.api.FormatText(Conf.State) + "\n";
-        text += this.api.FormatText(Conf.Details) + "\n";
-        var large = this.api.FormatText(Conf.LargeImageText);
+        var text = api.FormatText(Conf.State) + "\n";
+        text += api.FormatText(Conf.Details) + "\n";
+        var large = api.FormatText(Conf.LargeImageText);
         if (large.Length > 0) text += $"Large image text: {large}\n";
-        var small = this.api.FormatText(Conf.SmallImageText);
+        var small = api.FormatText(Conf.SmallImageText);
         if (small.Length > 0) text += $"Small image text: {small}\n";
         return text;
       });
@@ -243,33 +268,17 @@ namespace SVRichPresence {
 
       configMenu.AddPage(mod, "tags", () => "Tags");
       configMenu.AddParagraph(mod, () => {
-        var api = this.api;
-        IDictionary<string, string> tags = api.ListTags("[NULL]", "[ERROR]");
-
-        IDictionary<string, IDictionary<string, string>> groups =
-          new Dictionary<string, IDictionary<string, string>>();
-        foreach (KeyValuePair<string, string> tag in tags) {
-          string owner = api.GetTagOwner(tag.Key) ?? "Unknown-Mod";
-          if (!groups.ContainsKey(owner))
-            groups[owner] = new Dictionary<string, string>();
-          groups[owner][tag.Key] = tag.Value;
-        }
-
-        IList<string> output = new List<string>(tags.Count + groups.Count);
-        foreach (KeyValuePair<string, string> tag in groups[ModManifest.UniqueID])
-          output.Add($"{{{{ {tag.Key} }}}}: {tag.Value}");
-
-        foreach (KeyValuePair<string, IDictionary<string, string>> group in groups) {
-          if (group.Key == ModManifest.UniqueID) continue;
-          output.Add($"\nTags from {Helper.ModRegistry.Get(group.Key)?.Manifest.Name ?? "an unknown mod"}:");
-
-          foreach (KeyValuePair<string, string> tag in group.Value)
-            output.Add($"{{{{ {tag.Key} }}}}: {tag.Value}");
-        }
-
-        return string.Join("\n", output);
+        string output = FormatTags(out _, out int nulls, pad: false);
+        output += $"\n\n{nulls} tag{(nulls != 1 ? "s" : "")} unavailable.";
+        return output;
       });
-  }
+      configMenu.AddPageLink(mod, "alltags", () => "Click here to show all tags.");
+
+      configMenu.AddPage(mod, "alltags", () => "All Tags");
+      configMenu.AddParagraph(mod, () =>
+        FormatTags(out _, out _, format: "{{{0}}}: {1}", pad: false, all: true)
+      );
+    }
 
     private void RPCModMenuSection(IGenericModConfigMenuApi api, MenuPresence conf) {
       var mod = ModManifest;
