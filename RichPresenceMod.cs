@@ -119,7 +119,7 @@ namespace SVRichPresence {
       SetTag(mod, "LevelNumber", ReqWorld(() => Game1.player.Level.ToString()));
       SetTag(mod, "Title", ReqWorld(() => Game1.player.getTitle().ToString()));
       SetTag(mod, "TotalTime", ReqWorld(() => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed)));
-      SetTag(mod, "TotalTimeLetterFormat", ReqWorld(() => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed).replace(":", "h")));
+      SetTag(mod, "TotalTimeLetterFormat", ReqWorld(() => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed).Replace(":", "h")));
 
       SetTag(mod, "Health", ReqWorld(() => Game1.player.health.ToString()));
       SetTag(mod, "HealthMax", ReqWorld(() => Game1.player.maxHealth.ToString()));
