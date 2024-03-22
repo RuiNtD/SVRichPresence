@@ -138,8 +138,8 @@ namespace SVRichPresence {
       SetTag(mod, "Year", ReqWorld(() => SDate.Now().Year.ToString()));
       SetTag(mod, "YearSuffix", ReqWorld(() => Utility.getNumberEnding(SDate.Now().Year)));
 
-      SetTag(mod, "GameVerb", ReqWorld(() => Context.IsMultiplayer && Context.IsMainPlayer ? "Hosting" : "Playing"));
-      SetTag(mod, "GameNoun", ReqWorld(() => Context.IsMultiplayer ? "Co-op" : "Solo"));
+      SetTag(mod, "GameVerb", ReqWorld(() => Context.IsMultiplayer && Context.IsMainPlayer ? Helper.Translation.Get("hosting") : Helper.Translation.Get("playing")));
+      SetTag(mod, "GameNoun", ReqWorld(() => Context.IsMultiplayer ? Helper.Translation.Get("co-op") : Helper.Translation.Get("solo")));
       SetTag(mod, "GameInfo", ReqWorld(() => api.ResolveTag("GameVerb") + " " + api.ResolveTag("GameNoun")));
       #endregion
     }
