@@ -1,4 +1,9 @@
 {
+  // GenericModConfigMenu
+  "options.showGlobalPlaytime": "Affiche le temps de jeu global",
+  "options.addGetModButton": "Ajoute un bouton 'Obtenir le mod'",
+  "options.addGetModButton.desc": "Support the mod by adding a link to it on your rich presence.",
+
   "co-op": "co-op",
   "hosting": "Héberge",
   "playing": "Joue",

@@ -1,4 +1,10 @@
 {
+  // GenericModConfigMenu
+  "options.showGlobalPlaytime": "Show global playtime",
+  "options.addGetModButton": "Add Get Mod Button",
+  "options.addGetModButton.desc": "Support the mod by adding a link to it on your rich presence.",
+
+
   "co-op": "co-op",
   "hosting": "Hosting",
   "playing": "Playing",

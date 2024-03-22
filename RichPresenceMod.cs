@@ -214,13 +214,13 @@ namespace SVRichPresence {
       );
 
       configMenu.AddBoolOption(mod,
-          name: () => "Show global playtime",
+          name: () => Helper.Translation.Get("options.showGlobalPlaytime"),
           getValue: () => Config.ShowGlobalPlayTime,
           setValue: value => Config.ShowGlobalPlayTime = value
       );
       configMenu.AddBoolOption(mod,
-          name: () => "Add Get Mod Button",
-          tooltip: () => "Support the mod by adding a link to it on your rich presence.",
+          name: () => Helper.Translation.Get("options.addGetModButton"),
+          tooltip: () => Helper.Translation.Get("options.addGetModButton.desc"),
           getValue: () => Config.AddGetModButton,
           setValue: value => Config.AddGetModButton = value
       );
