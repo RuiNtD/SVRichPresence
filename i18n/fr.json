@@ -2,7 +2,10 @@
   // GenericModConfigMenu
   "options.showGlobalPlaytime": "Affiche le temps de jeu global",
   "options.addGetModButton": "Ajoute un bouton 'Obtenir le mod'",
-  "options.addGetModButton.desc": "Support the mod by adding a link to it on your rich presence.",
+  "options.addGetModButton.desc": "Supporter le mod en ajoutant un lien pour le télécharger dans l'activité.",
+  "options.preview": "Aperçu",
+  "options.customizePresenceInMenus": "Personnaliser l'Activité dans le menu",
+  "options.customizePresenceInGame": "Personnaliser l'Activité dans le jeu",
 
   "co-op": "co-op",
   "hosting": "Héberge",

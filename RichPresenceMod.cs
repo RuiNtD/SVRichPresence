@@ -225,7 +225,7 @@ namespace SVRichPresence {
           setValue: value => Config.AddGetModButton = value
       );
 
-      configMenu.AddSectionTitle(mod, () => "Preview");
+      configMenu.AddSectionTitle(mod, () => Helper.Translation.Get("options.preview"));
       configMenu.AddParagraph(mod, () => {
         var text = api.FormatText(Conf.State) + "\n";
         text += api.FormatText(Conf.Details) + "\n";
@@ -236,10 +236,10 @@ namespace SVRichPresence {
         return text;
       });
 
-      configMenu.AddSectionTitle(mod, () => "Customize Presence in Menus");
+      configMenu.AddSectionTitle(mod, () => Helper.Translation.Get("options.customizePresenceInMenus"));
       RPCModMenuSection(configMenu, Config.MenuPresence);
 
-      configMenu.AddSectionTitle(mod, () => "Customize Presence in Game");
+      configMenu.AddSectionTitle(mod, () => Helper.Translation.Get("options.customizePresenceInGame"));
       RPCModMenuSection(configMenu, Config.GamePresence);
       configMenu.AddBoolOption(mod,
         name: () => "Show season",

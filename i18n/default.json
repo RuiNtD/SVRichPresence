@@ -3,6 +3,9 @@
   "options.showGlobalPlaytime": "Show global playtime",
   "options.addGetModButton": "Add Get Mod Button",
   "options.addGetModButton.desc": "Support the mod by adding a link to it on your rich presence.",
+  "options.preview": "Preview",
+  "options.customizePresenceInMenus": "Customize Presence in Menus",
+  "options.customizePresenceInGame": "Customize Presence in Game",
 
 
   "co-op": "co-op",
