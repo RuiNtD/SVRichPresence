@@ -26,8 +26,8 @@ namespace SVRichPresence {
 
     public override void Entry(IModHelper helper) {
       if (Constants.TargetPlatform == GamePlatform.Android) {
-        Monitor.Log("Discord RPC is not supported on Android.", LogLevel.Error);
-        Monitor.Log("Aborting mod initialization.", LogLevel.Error);
+        Monitor.Log(Helper.Translation.Get("console.androidNotSupported"), LogLevel.Error);
+        Monitor.Log(Helper.Translation.Get("console.modInitialisationAbort"), LogLevel.Error);
         Dispose();
         return;
       }
@@ -39,7 +39,7 @@ namespace SVRichPresence {
       client.SetSubscription(EventType.Join);
       client.RegisterUriScheme(steamId);
       client.OnReady += (sender, e) =>
-        Monitor.Log("Connected to Discord: " + e.User.ToString(), LogLevel.Info);
+        Monitor.Log(Helper.Translation.Get("console.connectedToDiscord") + " : " + e.User.ToString(), LogLevel.Info);
       client.Initialize();
 
       #region Console Commands
@@ -77,9 +77,9 @@ namespace SVRichPresence {
       Helper.Events.GameLoop.SaveLoaded += SetTimestamp;
       Helper.Events.GameLoop.ReturnedToTitle += SetTimestamp;
       Helper.Events.GameLoop.SaveLoaded += (object sender, SaveLoadedEventArgs e) =>
-          api.GamePresence = "Getting Started";
+          api.GamePresence = Helper.Translation.Get("gamePresence.gettingStarted");
       Helper.Events.GameLoop.SaveCreated += (object sender, SaveCreatedEventArgs e) =>
-          api.GamePresence = "Starting a New Game";
+          api.GamePresence = Helper.Translation.Get("gamePresence.startingNewGame");
       Helper.Events.GameLoop.GameLaunched += (object sender, GameLaunchedEventArgs e) => {
         SetTimestamp();
         timestampSession = Timestamps.Now;
@@ -180,11 +180,10 @@ namespace SVRichPresence {
         var count = group.Count;
         if (count == 0) return;
 
-        string head = $"{count} tag";
-        if (count != 1) head += "s";
-        head += $" from {name}:";
         output.Add("");
-        output.Add(head);
+        output.Add(count > 1 ? 
+          Helper.Translation.Get("options.tagsFrom", new { count, name }) : 
+          Helper.Translation.Get("options.tagFrom", new { name }));
 
         list(group);
       }
@@ -195,7 +194,7 @@ namespace SVRichPresence {
         if (group.Key == "") continue;
         section(group.Value, group.Key);
       }
-      section(groups[""], "unknown mods");
+      section(groups[""], Helper.Translation.Get("options.unknownMods"));
 
       return string.Join("\n", output);
   }
@@ -230,9 +229,9 @@ namespace SVRichPresence {
         var text = api.FormatText(Conf.State) + "\n";
         text += api.FormatText(Conf.Details) + "\n";
         var large = api.FormatText(Conf.LargeImageText);
-        if (large.Length > 0) text += $"Large image text: {large}\n";
+        if (large.Length > 0) text += $"{Helper.Translation.Get("options.largeImageText")}: {large}\n";
         var small = api.FormatText(Conf.SmallImageText);
-        if (small.Length > 0) text += $"Small image text: {small}\n";
+        if (small.Length > 0) text += $"{Helper.Translation.Get("options.smallImageText")}: {small}\n";
         return text;
       });
 
@@ -242,26 +241,26 @@ namespace SVRichPresence {
       configMenu.AddSectionTitle(mod, () => Helper.Translation.Get("options.customizePresenceInGame"));
       RPCModMenuSection(configMenu, Config.GamePresence);
       configMenu.AddBoolOption(mod,
-        name: () => "Show season",
-        tooltip: () => "Show the current season on large image",
+        name: () => Helper.Translation.Get("options.showSeason"),
+        tooltip: () => Helper.Translation.Get("options.showSeason.desc"),
         getValue: () => Config.GamePresence.ShowSeason,
         setValue: value => Config.GamePresence.ShowSeason = value
        );
       configMenu.AddBoolOption(mod,
-        name: () => "Show farm type",
-        tooltip: () => "Show the farm type on large image",
+        name: () => Helper.Translation.Get("options.showFarmType"),
+        tooltip: () => Helper.Translation.Get("options.showFarmType.desc"),
         getValue: () => Config.GamePresence.ShowFarmType,
         setValue: value => Config.GamePresence.ShowFarmType = value
       );
       configMenu.AddBoolOption(mod,
-        name: () => "Show weather",
-        tooltip: () => "Show the current weather on small image",
+        name: () => Helper.Translation.Get("options.showWeather"),
+        tooltip: () => Helper.Translation.Get("options.showWeather.desc"),
         getValue: () => Config.GamePresence.ShowWeather,
         setValue: value => Config.GamePresence.ShowWeather = value
       );
       configMenu.AddBoolOption(mod,
-        name: () => "Show play time",
-        tooltip: () => "Show how long you've been playing",
+        name: () => Helper.Translation.Get("options.showPlaytime"),
+        tooltip: () => Helper.Translation.Get("options.showPlaytime.desc"),
         getValue: () => Config.GamePresence.ShowPlayTime,
         setValue: value => Config.GamePresence.ShowPlayTime = value
       );
@@ -272,9 +271,9 @@ namespace SVRichPresence {
         output += $"\n\n{nulls} tag{(nulls != 1 ? "s" : "")} unavailable.";
         return output;
       });
-      configMenu.AddPageLink(mod, "alltags", () => "Click here to show all tags.");
+      configMenu.AddPageLink(mod, "alltags", () => Helper.Translation.Get("options.showAllTags"));
 
-      configMenu.AddPage(mod, "alltags", () => "All Tags");
+      configMenu.AddPage(mod, "alltags", () => Helper.Translation.Get("options.allTags"));
       configMenu.AddParagraph(mod, () =>
         FormatTags(out _, out _, format: "{{{0}}}: {1}", pad: false, all: true)
       );
@@ -282,30 +281,30 @@ namespace SVRichPresence {
 
     private void RPCModMenuSection(IGenericModConfigMenuApi api, MenuPresence conf) {
       var mod = ModManifest;
-      api.AddPageLink(mod, "tags", () => "Show available tags");
+      api.AddPageLink(mod, "tags", () => Helper.Translation.Get("options.showAvailableTags"));
       api.AddTextOption(mod,
-        name: () => "Line 1 (State)",
+        name: () => Helper.Translation.Get("options.line1"),
         getValue: () => conf.State,
         setValue: value => conf.State = value
       );
       api.AddTextOption(mod,
-        name: () => "Line 2 (Details)",
+        name: () => Helper.Translation.Get("options.line2"),
         getValue: () => conf.Details,
         setValue: value => conf.Details = value
       );
       api.AddTextOption(mod,
-        name: () => "Large Image Text",
+        name: () => Helper.Translation.Get("options.largeImageText"),
         getValue: () => conf.LargeImageText,
         setValue: value => conf.LargeImageText = value
       );
       api.AddTextOption(mod,
-        name: () => "Small Image Text",
+        name: () => Helper.Translation.Get("options.smallImageText"),
         getValue: () => conf.SmallImageText,
         setValue: value => conf.SmallImageText = value
       );
       api.AddBoolOption(mod,
-        name: () => "Force small image",
-        tooltip: () => "Always show small image, even if small text is empty and weather isn't shown.",
+        name: () => Helper.Translation.Get("options.forceSmallImage"),
+        tooltip: () => Helper.Translation.Get("options.forceSmallImage.desc"),
         getValue: () => conf.ForceSmallImage,
         setValue: value => conf.ForceSmallImage = value
       );
@@ -316,9 +315,9 @@ namespace SVRichPresence {
         return;
       try {
         LoadConfig();
-        Game1.addHUDMessage(new HUDMessage("DiscordRP config reloaded.", HUDMessage.newQuest_type));
+        Game1.addHUDMessage(new HUDMessage(Helper.Translation.Get("console.reloadConfig"), HUDMessage.newQuest_type));
       } catch (Exception err) {
-        Game1.addHUDMessage(new HUDMessage("Failed to reload DiscordRP config. Check console.", HUDMessage.error_type));
+        Game1.addHUDMessage(new HUDMessage(Helper.Translation.Get("console.reloadConfig.failed"), HUDMessage.error_type));
         Monitor.Log(err.ToString(), LogLevel.Error);
       }
     }
@@ -377,7 +376,7 @@ namespace SVRichPresence {
         presence.Timestamps = timestampSession;
       if (Config.AddGetModButton)
         presence.Buttons = new Button[] {
-          new() { Label = "Get SDV Rich Presence Mod", Url = "https://ruintd.github.io/SVRichPresence/" }
+          new() { Label = Helper.Translation.Get("getModButton"), Url = "https://ruintd.github.io/SVRichPresence/" }
         };
 
       presence.Assets = assets;

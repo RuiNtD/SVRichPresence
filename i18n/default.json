@@ -1,4 +1,11 @@
 {
+  // Console Output
+  "console.androidNotSupported": "Discord RPC is not supported on Android.",
+  "console.modInitialisationAbort": "Aborting mod initialization.",
+  "console.connectedToDiscord": "Connected to Discord",
+  "console.reloadConfig": "DiscordRP config reloaded.",
+  "console.reloadConfig.failed": "Failed to reload DiscordRP config. Check console.",
+
   // GenericModConfigMenu
   "options.showGlobalPlaytime": "Show global playtime",
   "options.addGetModButton": "Add Get Mod Button",
@@ -6,10 +13,36 @@
   "options.preview": "Preview",
   "options.customizePresenceInMenus": "Customize Presence in Menus",
   "options.customizePresenceInGame": "Customize Presence in Game",
+  "options.line1": "Line 1 (State)",
+  "options.line2": "Line 2 (Details)",
+  "options.largeImageText": "Large image text",
+  "options.smallImageText": "Small image text",
+  "options.forceSmallImage": "Force small image",
+  "options.forceSmallImage.desc": "Always show small image, even if small text is empty and weather isn't shown.",
+  "options.showSeason": "Show season",
+  "options.showSeason.desc": "Show the current season on large image",
+  "options.showFarmType": "Show farm type",
+  "options.showFarmType.desc": "Show the farm type on large image",
+  "options.showWeather": "Show weather",
+  "options.showWeather.desc": "Show the current weather on small image",
+  "options.showPlaytime": "Show play time",
+  "options.showPlaytime.desc": "Show how long you've been playing",
+  "options.showAllTags": "Click here to show all tags",
+  "options.showAvailableTags": "Show available tags",
+  "options.allTags": "All tags",
+  "options.tagFrom": "1 tag from {{name}}",
+  "options.tagsFrom": "{{count}} tags from {{name}}",
+  "options.unknownMods": "unknown mods",
 
+
+  // GamePresence
+  "gamePresence.gettingStarted": "Getting Started",
+  "gamePresence.startingNewGame": "Starting a New Game",
 
   "co-op": "co-op",
   "hosting": "Hosting",
   "playing": "Playing",
-  "solo": "solo"
+  "solo": "solo",
+
+  "getModButton": "Get SDV Rich Presence Mod"
 }
