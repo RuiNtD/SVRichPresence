@@ -39,32 +39,31 @@ namespace SVRichPresence {
       client.SetSubscription(EventType.Join);
       client.RegisterUriScheme(steamId);
       client.OnReady += (sender, e) =>
-        Monitor.Log(Helper.Translation.Get("console.connectedToDiscord") + " : " + e.User.ToString(), LogLevel.Info);
+        Monitor.Log($"{Helper.Translation.Get("console.connectedToDiscord")}: {e.User}", LogLevel.Info);
       client.Initialize();
 
       #region Console Commands
       Helper.ConsoleCommands.Add("DiscordReload",
-        "Reloads the config for Discord Rich Presence.",
+        Helper.Translation.Get("command.discordreload.desc"),
         (string command, string[] args) => {
           LoadConfig();
-          Monitor.Log("Config reloaded.", LogLevel.Info);
         }
       );
       Helper.ConsoleCommands.Add("DiscordFormat",
-        "Formats and prints a provided configuration string.",
+        Helper.Translation.Get("command.discordformat.desc"),
         (string command, string[] args) => {
           string text = this.api.FormatText(string.Join(" ", args));
-          Monitor.Log("Result: " + text, LogLevel.Info);
+          Monitor.Log($"{Helper.Translation.Get("command.discordformat.result")}: {text}", LogLevel.Info);
         }
       );
       Helper.ConsoleCommands.Add("DiscordTags",
-        "Lists tags usable for configuration strings.",
+        Helper.Translation.Get("command.discordtags.desc"),
         (string command, string[] args) => {
           bool all = string.Join("", args).ToLower().StartsWith("all");
-          string output = "Available tags:\n";
+          string output = $"{Helper.Translation.Get("command.discordtags.availableTags")}:\n";
           output += FormatTags(out _, out int nulls, format: "  {{{0}}}: {1}", pad: true, all: all);
           if (nulls > 0)
-            output += $"\n\n{nulls} tag{(nulls != 1 ? "s" : "")} unavailable; type `DiscordTags all` to show all";
+            output += $"\n\n{Helper.Translation.Get((nulls > 1 ? "command.discordtags.unavailableTags" : "command.discordtags.unavailableTag"), new {count = nulls})}";
           Monitor.Log(output, LogLevel.Info);
         }
       );
@@ -181,9 +180,7 @@ namespace SVRichPresence {
         if (count == 0) return;
 
         output.Add("");
-        output.Add(count > 1 ? 
-          Helper.Translation.Get("options.tagsFrom", new { count, name }) : 
-          Helper.Translation.Get("options.tagFrom", new { name }));
+        output.Add(Helper.Translation.Get(count > 1 ? "options.tagsFrom" : "options.tagFrom", new { count, name }));
 
         list(group);
       }

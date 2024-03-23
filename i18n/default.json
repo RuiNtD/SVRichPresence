@@ -1,4 +1,13 @@
 {
+  // Commands
+  "command.discordreload.desc": "Reloads the config for Discord Rich Presence.",
+  "command.discordformat.desc": "Formats and prints a provided configuration string.",
+  "command.discordformat.result": "Result",
+  "command.discordtags.desc": "Lists tags usable for configuration strings.",
+  "command.discordtags.availableTags": "Available tags",
+  "command.discordtags.unavailableTag": "{{count}} unavailable tag; type `discordtags all` to show all",
+  "command.discordtags.unavailableTags": "{{count}} unavailable tags; type `discordtags all` to show all",
+
   // Console Output
   "console.androidNotSupported": "Discord RPC is not supported on Android.",
   "console.modInitialisationAbort": "Aborting mod initialization.",
@@ -30,7 +39,7 @@
   "options.showAllTags": "Click here to show all tags",
   "options.showAvailableTags": "Show available tags",
   "options.allTags": "All tags",
-  "options.tagFrom": "1 tag from {{name}}",
+  "options.tagFrom": "{{count}} tag from {{name}}",
   "options.tagsFrom": "{{count}} tags from {{name}}",
   "options.unknownMods": "unknown mods",
 
