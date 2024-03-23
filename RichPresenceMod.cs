@@ -27,13 +27,6 @@ namespace SVRichPresence {
     private DiscordRpcClient client;
 
     public override void Entry(IModHelper helper) {
-      if (Constants.TargetPlatform == GamePlatform.Android) {
-        Monitor.Log(Helper.Translation.Get("console.androidNotSupported"), LogLevel.Error);
-        Monitor.Log(Helper.Translation.Get("console.modInitialisationAbort"), LogLevel.Error);
-        Dispose();
-        return;
-      }
-
       api = new RichPresenceAPI(this);
       client = new DiscordRpcClient(clientId,
         autoEvents: false,
