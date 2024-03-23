@@ -27,13 +27,6 @@ namespace SVRichPresence {
     private DiscordRpcClient client;
 
     public override void Entry(IModHelper helper) {
-      if (Constants.TargetPlatform == GamePlatform.Android) {
-        Monitor.Log("Discord RPC is not supported on Android.", LogLevel.Error);
-        Monitor.Log("Aborting mod initialization.", LogLevel.Error);
-        Dispose();
-        return;
-      }
-
       api = new RichPresenceAPI(this);
       client = new DiscordRpcClient(clientId,
         autoEvents: false,
