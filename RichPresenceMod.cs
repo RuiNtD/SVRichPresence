@@ -140,7 +140,7 @@ namespace SVRichPresence {
 
       SetTag(mod, "GameVerb", ReqWorld(() => Context.IsMultiplayer && Context.IsMainPlayer ? "Hosting" : "Playing"));
       SetTag(mod, "GameNoun", ReqWorld(() => Context.IsMultiplayer ? "Co-op" : "Solo"));
-      SetTag(mod, "GameInfo", ReqWorld(() => api.ResolveTag("GameVerb") + " " + api.ResolveTag("GameNoun")));
+      SetTag(mod, "GameInfo", ReqWorld(() => api.FormatTag("GameVerb") + " " + api.FormatTag("GameNoun")));
       #endregion
     }
 
