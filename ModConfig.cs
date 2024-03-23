@@ -4,9 +4,9 @@ namespace SVRichPresence {
   internal class ModConfig {
     public SButton ReloadConfigButton = SButton.F5;
     public bool ShowGlobalPlayTime = false;
+    public bool AddGetModButton = true;
     public MenuPresence MenuPresence = new();
     public GamePresence GamePresence = new();
-    public bool AddGetModButton = true;
   }
 
   internal class MenuPresence {
