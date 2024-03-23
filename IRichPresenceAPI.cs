@@ -1,10 +1,11 @@
-﻿using Netcode;
-using StardewModdingAPI;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using StardewModdingAPI;
 
-namespace SVRichPresence {
-  public interface IRichPresenceAPI {
+namespace SVRichPresence
+{
+  public interface IRichPresenceAPI
+  {
     /// <summary>
     ///	Defines a tag with a resolver function.
     /// </summary>
@@ -66,9 +67,13 @@ namespace SVRichPresence {
     /// <param name="replaceErrors">Text to replace tags that throw an exception. If <c>null</c>, the tag is omitted.</param>
     /// <param name="replaceNulls">Text to replace tags that return null. If <c>null</c>, the tag is omitted.</param>
     /// <returns>A dictionary using <see cref="FormatTag"/> for each value.</returns>
-    IDictionary<string, string> FormatAllTags(string replaceErrors = null, string replaceNulls = null);
+    IDictionary<string, string> FormatAllTags(
+      string replaceErrors = null,
+      string replaceNulls = null
+    );
 
-    public interface IResolvedTag {
+    public interface IResolvedTag
+    {
       bool Success { get; }
       string Value { get; }
       Exception Exception { get; }
@@ -92,7 +97,5 @@ namespace SVRichPresence {
     /// <param name="replaceNull">Text to replace tags that return null. If <c>null</c>, the tag is untouched.</param>
     /// <returns>The formatted text</returns>
     string FormatText(string text, string replaceError = null, string replaceNull = null);
-
-    Func<string> ReqWorld(Func<string> func);
   }
 }
