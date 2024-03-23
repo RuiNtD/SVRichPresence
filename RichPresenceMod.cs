@@ -377,7 +377,7 @@ namespace SVRichPresence {
         presence.Timestamps = timestampSession;
       if (Config.AddGetModButton)
         presence.Buttons = new Button[] {
-          new() { Label = "Get SDV Rich Presence Mod", Url = "https://ruintd.github.io/SVRichPresence/" }
+          new() { Label = "Get SDV Rich Presence Mod", Url = "https://github.com/RuiNtD/SVRichPresence" }
         };
 
       presence.Assets = assets;
