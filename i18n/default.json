@@ -9,11 +9,11 @@
   "command.discordtags.unavailableTags": "{{count}} unavailable tags; type `discordtags all` to show all",
 
   // Console Output
-  "console.androidNotSupported": "Discord RPC is not supported on Android.",
+  "console.androidNotSupported": "DiscordRP is not supported on Android.",
   "console.modInitialisationAbort": "Aborting mod initialization.",
   "console.connectedToDiscord": "Connected to Discord",
   "console.reloadConfig": "DiscordRP config reloaded.",
-  "console.reloadConfig.failed": "Failed to reload DiscordRP config. Check console.",
+  "console.reloadConfig.failed": "Failed to reload Discord RPC config. Check console.",
 
   // GenericModConfigMenu
   "options.showGlobalPlaytime": "Show global playtime",
@@ -38,6 +38,8 @@
   "options.showPlaytime.desc": "Show how long you've been playing",
   "options.showAllTags": "Click here to show all tags",
   "options.showAvailableTags": "Show available tags",
+  "options.unavailableTag": "{{count}} unavailable tag",
+  "options.unavailableTags": "{{count}} unavailable tags",
   "options.allTags": "All tags",
   "options.tagFrom": "{{count}} tag from {{name}}",
   "options.tagsFrom": "{{count}} tags from {{name}}",

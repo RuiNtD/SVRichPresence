@@ -265,7 +265,7 @@ namespace SVRichPresence {
       configMenu.AddPage(mod, "tags", () => "Tags");
       configMenu.AddParagraph(mod, () => {
         string output = FormatTags(out _, out int nulls, pad: false);
-        output += $"\n\n{nulls} tag{(nulls != 1 ? "s" : "")} unavailable.";
+        output += $"\n\n{Helper.Translation.Get((nulls > 1 ? "options.unavailableTags" : "options.unavailableTag"), new { count = nulls })}";
         return output;
       });
       configMenu.AddPageLink(mod, "alltags", () => Helper.Translation.Get("options.showAllTags"));
