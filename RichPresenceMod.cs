@@ -20,6 +20,8 @@ namespace SVRichPresence {
   public class RichPresenceMod : Mod {
     private static readonly string clientId = "444517509148966923";
     private static readonly string steamId = "413150";
+    private static readonly string ModURL = "https://www.nexusmods.com/stardewvalley/mods/2156";
+
     private ModConfig Config = new();
     private IRichPresenceAPI api;
     private DiscordRpcClient client;
@@ -377,7 +379,7 @@ namespace SVRichPresence {
         presence.Timestamps = timestampSession;
       if (Config.AddGetModButton)
         presence.Buttons = new Button[] {
-          new() { Label = "Get SDV Rich Presence Mod", Url = "https://ruintd.github.io/SVRichPresence/" }
+          new() { Label = "Get SDV Rich Presence Mod", Url = ModURL }
         };
 
       presence.Assets = assets;
