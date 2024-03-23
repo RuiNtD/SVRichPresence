@@ -38,6 +38,8 @@
   "options.showPlaytime.desc": "Affiche depuis combien de temps vous jouez.",
   "options.showAllTags": "Cliquer ici pour afficher tous les tags",
   "options.showAvailableTags": "Afficher les tags disponibles",
+  "options.unavailableTag": "{{count}} tag indisponible",
+  "options.unavailableTags": "{{count}} tags indisponibles",
   "options.allTags": "Tous les tags",
   "options.tagFrom": "{{count}} tag de {{name}}",
   "options.tagsFrom": "{{count}} tags de {{name}}",
