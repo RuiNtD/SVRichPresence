@@ -50,10 +50,9 @@
   "gamePresence.gettingStarted": "Vient de commencer",
   "gamePresence.startingNewGame": "Démarre une nouvelle partie",
 
-  "co-op": "co-op",
-  "hosting": "Héberge",
-  "playing": "Joue",
-  "solo": "solo",
+  "hostingCoop": "Héberge en co-op",
+  "playingCoop": "Joue en co-op",
+  "playingSolo": "Joue en solo",
 
   "getModButton": "Obtenir SDV Rich Presence"
 }

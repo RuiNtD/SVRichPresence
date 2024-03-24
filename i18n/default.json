@@ -50,10 +50,9 @@
   "gamePresence.gettingStarted": "Getting Started",
   "gamePresence.startingNewGame": "Starting a New Game",
 
-  "co-op": "co-op",
-  "hosting": "Hosting",
-  "playing": "Playing",
-  "solo": "solo",
+  "hostingCoop": "Hosting coop",
+  "playingCoop": "Playing coop",
+  "playingSolo": "Playing solo",
 
   "getModButton": "Get SDV Rich Presence Mod"
 }
