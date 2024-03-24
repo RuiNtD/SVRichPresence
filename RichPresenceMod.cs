@@ -1,41 +1,36 @@
-﻿using DiscordRPC;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using DiscordRPC;
 using GenericModConfigMenu;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
-using StardewValley.Buildings;
-using StardewValley.Locations;
-using StardewValley.Tools;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security;
-using static System.Net.Mime.MediaTypeNames;
 using Constants = StardewModdingAPI.Constants;
 using LogLevel = StardewModdingAPI.LogLevel;
 using Utility = StardewValley.Utility;
 
-namespace SVRichPresence {
-  public class RichPresenceMod : Mod {
+namespace SVRichPresence
+{
+  public class RichPresenceMod : Mod
+  {
     private static readonly string clientId = "444517509148966923";
     private static readonly string steamId = "413150";
+    private static readonly string ModURL = "https://www.nexusmods.com/stardewvalley/mods/2156";
+
     private ModConfig Config = new();
     private IRichPresenceAPI api;
     private DiscordRpcClient client;
 
-    public override void Entry(IModHelper helper) {
-      if (Constants.TargetPlatform == GamePlatform.Android) {
-        Monitor.Log("Discord RPC is not supported on Android.", LogLevel.Error);
-        Monitor.Log("Aborting mod initialization.", LogLevel.Error);
-        Dispose();
-        return;
-      }
-
+    public override void Entry(IModHelper helper)
+    {
       api = new RichPresenceAPI(this);
-      client = new DiscordRpcClient(clientId,
+      client = new DiscordRpcClient(
+        clientId,
         autoEvents: false,
-        logger: new MonitorLogger(Monitor));
+        logger: new MonitorLogger(Monitor)
+      );
       client.SetSubscription(EventType.Join);
       client.RegisterUriScheme(steamId);
       client.OnReady += (sender, e) =>
@@ -43,28 +38,35 @@ namespace SVRichPresence {
       client.Initialize();
 
       #region Console Commands
-      Helper.ConsoleCommands.Add("DiscordReload",
+      Helper.ConsoleCommands.Add(
+        "DiscordReload",
         "Reloads the config for Discord Rich Presence.",
-        (string command, string[] args) => {
+        (string command, string[] args) =>
+        {
           LoadConfig();
           Monitor.Log("Config reloaded.", LogLevel.Info);
         }
       );
-      Helper.ConsoleCommands.Add("DiscordFormat",
+      Helper.ConsoleCommands.Add(
+        "DiscordFormat",
         "Formats and prints a provided configuration string.",
-        (string command, string[] args) => {
+        (string command, string[] args) =>
+        {
           string text = this.api.FormatText(string.Join(" ", args));
           Monitor.Log("Result: " + text, LogLevel.Info);
         }
       );
-      Helper.ConsoleCommands.Add("DiscordTags",
+      Helper.ConsoleCommands.Add(
+        "DiscordTags",
         "Lists tags usable for configuration strings.",
-        (string command, string[] args) => {
+        (string command, string[] args) =>
+        {
           bool all = string.Join("", args).ToLower().StartsWith("all");
           string output = "Available tags:\n";
           output += FormatTags(out _, out int nulls, format: "  {{{0}}}: {1}", pad: true, all: all);
           if (nulls > 0)
-            output += $"\n\n{nulls} tag{(nulls != 1 ? "s" : "")} unavailable; type `DiscordTags all` to show all";
+            output +=
+              $"\n\n{nulls} tag{(nulls != 1 ? "s" : "")} unavailable; type `DiscordTags all` to show all";
           Monitor.Log(output, LogLevel.Info);
         }
       );
@@ -77,81 +79,145 @@ namespace SVRichPresence {
       Helper.Events.GameLoop.SaveLoaded += SetTimestamp;
       Helper.Events.GameLoop.ReturnedToTitle += SetTimestamp;
       Helper.Events.GameLoop.SaveLoaded += (object sender, SaveLoadedEventArgs e) =>
-          api.GamePresence = "Getting Started";
+        api.GamePresence = "Getting Started";
       Helper.Events.GameLoop.SaveCreated += (object sender, SaveCreatedEventArgs e) =>
-          api.GamePresence = "Starting a New Game";
-      Helper.Events.GameLoop.GameLaunched += (object sender, GameLaunchedEventArgs e) => {
+        api.GamePresence = "Starting a New Game";
+      Helper.Events.GameLoop.GameLaunched += (object sender, GameLaunchedEventArgs e) =>
+      {
         SetTimestamp();
         timestampSession = Timestamps.Now;
       };
 
       #region Default Tags
-      var mod = ModManifest;
-      var ReqWorld = api.ReqWorld;
       var None = api.None;
-      var SetTag = api.SetTag;
 
-      SetTag(mod, "Activity", () => api.GamePresence);
-      SetTag(mod, "ModCount", () => Helper.ModRegistry.GetAll().Count().ToString());
-      SetTag(mod, "SMAPIVersion", () => Constants.ApiVersion.ToString());
-      SetTag(mod, "StardewVersion", () => Game1.version);
-      SetTag(mod, "RPCModVersion", () => ModManifest.Version.ToString());
-      SetTag(mod, "Song", () => Utility.getSongTitleFromCueName(Game1.currentSong?.Name ?? None));
+      Tag("Activity", () => api.GamePresence);
+      Tag("ModCount", () => Helper.ModRegistry.GetAll().Count().ToString());
+      Tag("SMAPIVersion", () => Constants.ApiVersion.ToString());
+      Tag("StardewVersion", () => Game1.version);
+      Tag("RPCModVersion", () => ModManifest.Version.ToString());
+      Tag("Song", () => Utility.getSongTitleFromCueName(Game1.currentSong?.Name ?? None));
 
-      SetTag(mod, "Name", ReqWorld(() => Game1.player.Name));
-      SetTag(mod, "Farm", ReqWorld(() => Game1.content.LoadString("Strings\\UI:Inventory_FarmName", api.FormatTag("FarmName"))));
-      SetTag(mod, "FarmName", ReqWorld(() => Game1.player.farmName.ToString()));
-      SetTag(mod, "PetName", ReqWorld(() => Game1.player.hasPet() ? Game1.player.getPetDisplayName() : None));
-      SetTag(mod, "Location", ReqWorld(() => Game1.currentLocation.Name));
-      SetTag(mod, "RomanticInterest", ReqWorld(() => Utility.getTopRomanticInterest(Game1.player)?.getName() ?? None));
-      SetTag(mod, "NonRomanticInterest", ReqWorld(() => Utility.getTopNonRomanticInterest(Game1.player)?.getName() ?? None));
+      WTag("Name", () => Game1.player.Name);
+      WTag(
+        "Farm",
+        () => Game1.content.LoadString("Strings\\UI:Inventory_FarmName", api.FormatTag("FarmName"))
+      );
+      WTag("FarmName", () => Game1.player.farmName.ToString());
+      WTag("PetName", () => Game1.player.hasPet() ? Game1.player.getPetDisplayName() : None);
+      WTag("Location", () => Game1.currentLocation.Name);
+      WTag(
+        "RomanticInterest",
+        () => Utility.getTopRomanticInterest(Game1.player)?.getName() ?? None
+      );
+      WTag(
+        "NonRomanticInterest",
+        () => Utility.getTopNonRomanticInterest(Game1.player)?.getName() ?? None
+      );
 
-      SetTag(mod, "Money", ReqWorld(() => {
-        // Copied from LoadGameMenu.drawSlotMoney
-        string cashText = Game1.content.LoadString("Strings\\StringsFromCSFiles:LoadGameMenu.cs.11020", Utility.getNumberWithCommas(Game1.player.Money));
-        if (Game1.player.Money == 1 && LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.pt)
-          cashText = cashText[..^1];
-        return cashText;
-      }));
-      SetTag(mod, "MoneyCommas", ReqWorld(() => Utility.getNumberWithCommas(Game1.player.Money)));
-      SetTag(mod, "MoneyNumber", ReqWorld(() => Game1.player.Money.ToString()));
-      SetTag(mod, "Level", ReqWorld(() => Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", Game1.player.Level.ToString())));
-      SetTag(mod, "LevelNumber", ReqWorld(() => Game1.player.Level.ToString()));
-      SetTag(mod, "Title", ReqWorld(() => Game1.player.getTitle().ToString()));
-      SetTag(mod, "TotalTime", ReqWorld(() => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed)));
-      SetTag(mod, "TotalTimeLetter", ReqWorld(() => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed).Replace(":", "h")));
+      WTag(
+        "Money",
+        () =>
+        {
+          // Copied from LoadGameMenu.drawSlotMoney
+          string cashText = Game1.content.LoadString(
+            "Strings\\StringsFromCSFiles:LoadGameMenu.cs.11020",
+            Utility.getNumberWithCommas(Game1.player.Money)
+          );
+          if (
+            Game1.player.Money == 1
+            && LocalizedContentManager.CurrentLanguageCode
+              == LocalizedContentManager.LanguageCode.pt
+          )
+            cashText = cashText[..^1];
+          return cashText;
+        }
+      );
+      WTag("MoneyCommas", () => Utility.getNumberWithCommas(Game1.player.Money));
+      WTag("MoneyNumber", () => Game1.player.Money.ToString());
+      WTag(
+        "Level",
+        () =>
+          Game1.content.LoadString(
+            "Strings\\UI:Inventory_PortraitHover_Level",
+            api.FormatTag("LevelNumber")
+          )
+      );
+      WTag("LevelNumber", () => Game1.player.Level.ToString());
+      WTag("Title", () => Game1.player.getTitle().ToString());
+      WTag(
+        "TotalTime",
+        () => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed)
+      );
+      WTag(
+        "TotalTimeFormat",
+        () => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed).Replace(":", "h"))
+      );
 
-      SetTag(mod, "Health", ReqWorld(() => Game1.player.health.ToString()));
-      SetTag(mod, "HealthMax", ReqWorld(() => Game1.player.maxHealth.ToString()));
-      SetTag(mod, "HealthPercent", ReqWorld(() => Math.Round((double)Game1.player.health / Game1.player.maxHealth * 100, 2).ToString()));
-      SetTag(mod, "Energy", ReqWorld(() => Game1.player.Stamina.ToString()));
-      SetTag(mod, "EnergyMax", ReqWorld(() => Game1.player.MaxStamina.ToString()));
-      SetTag(mod, "EnergyPercent", ReqWorld(() => Math.Round((double)Game1.player.Stamina / Game1.player.MaxStamina * 100, 2).ToString()));
+      WTag("Health", () => Game1.player.health.ToString());
+      WTag("HealthMax", () => Game1.player.maxHealth.ToString());
+      WTag(
+        "HealthPercent",
+        () => Math.Round((double)Game1.player.health / Game1.player.maxHealth * 100, 2).ToString()
+      );
+      WTag("Energy", () => Game1.player.Stamina.ToString());
+      WTag("EnergyMax", () => Game1.player.MaxStamina.ToString());
+      WTag(
+        "EnergyPercent",
+        () => Math.Round((double)Game1.player.Stamina / Game1.player.MaxStamina * 100, 2).ToString()
+      );
 
-      SetTag(mod, "Time", ReqWorld(() => Game1.getTimeOfDayString(Game1.timeOfDay)));
-      SetTag(mod, "Date", ReqWorld(() => Utility.getDateString()));
-      SetTag(mod, "Season", ReqWorld(() => Utility.getSeasonNameFromNumber(SDate.Now().SeasonIndex)));
-      SetTag(mod, "DayOfWeek", ReqWorld(() => Game1.shortDayDisplayNameFromDayOfSeason(SDate.Now().Day)));
+      WTag("Time", () => Game1.getTimeOfDayString(Game1.timeOfDay));
+      WTag("Date", () => Utility.getDateString());
+      WTag("Season", () => Utility.getSeasonNameFromNumber(SDate.Now().SeasonIndex));
+      WTag("DayOfWeek", () => Game1.shortDayDisplayNameFromDayOfSeason(SDate.Now().Day));
 
-      SetTag(mod, "Day", ReqWorld(() => SDate.Now().Day.ToString()));
-      SetTag(mod, "DayPad", ReqWorld(() => $"{SDate.Now().Day:00}"));
-      SetTag(mod, "DaySuffix", ReqWorld(() => Utility.getNumberEnding(SDate.Now().Day)));
-      SetTag(mod, "Year", ReqWorld(() => SDate.Now().Year.ToString()));
-      SetTag(mod, "YearSuffix", ReqWorld(() => Utility.getNumberEnding(SDate.Now().Year)));
+      WTag("Day", () => SDate.Now().Day.ToString());
+      WTag("DayPad", () => $"{SDate.Now().Day:00}");
+      WTag("DaySuffix", () => Utility.getNumberEnding(SDate.Now().Day));
+      WTag("Year", () => SDate.Now().Year.ToString());
+      WTag("YearSuffix", () => Utility.getNumberEnding(SDate.Now().Year));
 
-      SetTag(mod, "GameVerb", ReqWorld(() => Context.IsMultiplayer && Context.IsMainPlayer ? "Hosting" : "Playing"));
-      SetTag(mod, "GameNoun", ReqWorld(() => Context.IsMultiplayer ? "Co-op" : "Solo"));
-      SetTag(mod, "GameInfo", ReqWorld(() => api.ResolveTag("GameVerb") + " " + api.ResolveTag("GameNoun")));
+      WTag(
+        "GameInfo",
+        () =>
+          Context.IsMultiplayer
+            ? Context.IsMainPlayer
+              ? "Hosting Co-op"
+              : "Playing Co-op"
+            : "Playing Solo"
+      );
       #endregion
     }
 
-    private string FormatTags(out int count, out int nulls, string format = "{{{0}}}: {1}", bool pad = false, bool all = false) {
+    private void Tag(string tag, Func<string> func) => api.SetTag(this.ModManifest, tag, func);
+
+    private void WTag(string tag, Func<string> func) =>
+      Tag(
+        tag,
+        () =>
+        {
+          if (!Context.IsWorldReady)
+            return null;
+          return func();
+        }
+      );
+
+    private string FormatTags(
+      out int count,
+      out int nulls,
+      string format = "{{{0}}}: {1}",
+      bool pad = false,
+      bool all = false
+    )
+    {
       var tags = api.ResolveAllTags();
       nulls = 0;
       count = 0;
 
       Dictionary<string, Dictionary<string, string>> groups = new();
-      foreach (var tag in tags) {
+      foreach (var tag in tags)
+      {
         string owner = api.GetTagOwner(tag.Key) ?? "";
         owner = Helper.ModRegistry.Get(owner)?.Manifest.Name ?? "";
 
@@ -159,17 +225,21 @@ namespace SVRichPresence {
           groups[owner] = new();
 
         var val = tag.Value.Value;
-        if (!all && val is null) nulls++;
-        else {
+        if (!all && val is null)
+          nulls++;
+        else
+        {
           val ??= "[NULL]";
-          if (!tag.Value.Success) val = "[ERROR]";
+          if (!tag.Value.Success)
+            val = "[ERROR]";
           groups[owner][tag.Key] = val;
           count++;
         }
       }
 
       List<string> output = new(tags.Count + groups.Count);
-      void list(Dictionary<string, string> group) {
+      void list(Dictionary<string, string> group)
+      {
         int longest = 0;
         if (pad)
           foreach (var tag in group)
@@ -177,12 +247,15 @@ namespace SVRichPresence {
         foreach (var tag in group)
           output.Add(String.Format(format, tag.Key.PadLeft(longest), tag.Value));
       }
-      void section(Dictionary<string, string> group, string name) {
+      void section(Dictionary<string, string> group, string name)
+      {
         var count = group.Count;
-        if (count == 0) return;
+        if (count == 0)
+          return;
 
         string head = $"{count} tag";
-        if (count != 1) head += "s";
+        if (count != 1)
+          head += "s";
         head += $" from {name}:";
         output.Add("");
         output.Add(head);
@@ -191,76 +264,92 @@ namespace SVRichPresence {
       }
       list(groups[ModManifest.Name]);
 
-      foreach (var group in groups) {
-        if (group.Key == ModManifest.Name) continue;
-        if (group.Key == "") continue;
+      foreach (var group in groups)
+      {
+        if (group.Key == ModManifest.Name)
+          continue;
+        if (group.Key == "")
+          continue;
         section(group.Value, group.Key);
       }
       section(groups[""], "unknown mods");
 
       return string.Join("\n", output);
-  }
+    }
 
     public override object GetApi() => api;
 
-    private void RegisterConfigMenu(object sender, GameLaunchedEventArgs e) {
+    private void RegisterConfigMenu(object sender, GameLaunchedEventArgs e)
+    {
       // get Generic Mod Config Menu's API (if it's installed)
-      var configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
-      if (configMenu is null) return;
+      var configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>(
+        "spacechase0.GenericModConfigMenu"
+      );
+      if (configMenu is null)
+        return;
       var mod = ModManifest;
 
-      configMenu.Register(mod,
-        reset: () => Config = new ModConfig(),
-        save: () => SaveConfig()
-      );
+      configMenu.Register(mod, reset: () => Config = new ModConfig(), save: () => SaveConfig());
 
-      configMenu.AddBoolOption(mod,
-          name: () => "Show global playtime",
-          getValue: () => Config.ShowGlobalPlayTime,
-          setValue: value => Config.ShowGlobalPlayTime = value
+      configMenu.AddBoolOption(
+        mod,
+        name: () => "Show global playtime",
+        getValue: () => Config.ShowGlobalPlayTime,
+        setValue: value => Config.ShowGlobalPlayTime = value
       );
-      configMenu.AddBoolOption(mod,
-          name: () => "Add Get Mod Button",
-          tooltip: () => "Support the mod by adding a link to it on your rich presence.",
-          getValue: () => Config.AddGetModButton,
-          setValue: value => Config.AddGetModButton = value
+      configMenu.AddBoolOption(
+        mod,
+        name: () => "Add Get Mod Button",
+        tooltip: () => "Support the mod by adding a link to it on your rich presence.",
+        getValue: () => Config.AddGetModButton,
+        setValue: value => Config.AddGetModButton = value
       );
 
       configMenu.AddSectionTitle(mod, () => "Preview");
-      configMenu.AddParagraph(mod, () => {
-        var text = api.FormatText(Conf.State) + "\n";
-        text += api.FormatText(Conf.Details) + "\n";
-        var large = api.FormatText(Conf.LargeImageText);
-        if (large.Length > 0) text += $"Large image text: {large}\n";
-        var small = api.FormatText(Conf.SmallImageText);
-        if (small.Length > 0) text += $"Small image text: {small}\n";
-        return text;
-      });
+      configMenu.AddParagraph(
+        mod,
+        () =>
+        {
+          var text = api.FormatText(Conf.State) + "\n";
+          text += api.FormatText(Conf.Details) + "\n";
+          var large = api.FormatText(Conf.LargeImageText);
+          if (large.Length > 0)
+            text += $"Large image text: {large}\n";
+          var small = api.FormatText(Conf.SmallImageText);
+          if (small.Length > 0)
+            text += $"Small image text: {small}\n";
+          return text;
+        }
+      );
 
       configMenu.AddSectionTitle(mod, () => "Customize Presence in Menus");
       RPCModMenuSection(configMenu, Config.MenuPresence);
 
       configMenu.AddSectionTitle(mod, () => "Customize Presence in Game");
       RPCModMenuSection(configMenu, Config.GamePresence);
-      configMenu.AddBoolOption(mod,
+      configMenu.AddBoolOption(
+        mod,
         name: () => "Show season",
         tooltip: () => "Show the current season on large image",
         getValue: () => Config.GamePresence.ShowSeason,
         setValue: value => Config.GamePresence.ShowSeason = value
-       );
-      configMenu.AddBoolOption(mod,
+      );
+      configMenu.AddBoolOption(
+        mod,
         name: () => "Show farm type",
         tooltip: () => "Show the farm type on large image",
         getValue: () => Config.GamePresence.ShowFarmType,
         setValue: value => Config.GamePresence.ShowFarmType = value
       );
-      configMenu.AddBoolOption(mod,
+      configMenu.AddBoolOption(
+        mod,
         name: () => "Show weather",
         tooltip: () => "Show the current weather on small image",
         getValue: () => Config.GamePresence.ShowWeather,
         setValue: value => Config.GamePresence.ShowWeather = value
       );
-      configMenu.AddBoolOption(mod,
+      configMenu.AddBoolOption(
+        mod,
         name: () => "Show play time",
         tooltip: () => "Show how long you've been playing",
         getValue: () => Config.GamePresence.ShowPlayTime,
@@ -268,58 +357,76 @@ namespace SVRichPresence {
       );
 
       configMenu.AddPage(mod, "tags", () => "Tags");
-      configMenu.AddParagraph(mod, () => {
-        string output = FormatTags(out _, out int nulls, pad: false);
-        output += $"\n\n{nulls} tag{(nulls != 1 ? "s" : "")} unavailable.";
-        return output;
-      });
+      configMenu.AddParagraph(
+        mod,
+        () =>
+        {
+          string output = FormatTags(out _, out int nulls, pad: false);
+          output += $"\n\n{nulls} tag{(nulls != 1 ? "s" : "")} unavailable.";
+          return output;
+        }
+      );
       configMenu.AddPageLink(mod, "alltags", () => "Click here to show all tags.");
 
       configMenu.AddPage(mod, "alltags", () => "All Tags");
-      configMenu.AddParagraph(mod, () =>
-        FormatTags(out _, out _, format: "{{{0}}}: {1}", pad: false, all: true)
+      configMenu.AddParagraph(
+        mod,
+        () => FormatTags(out _, out _, format: "{{{0}}}: {1}", pad: false, all: true)
       );
     }
 
-    private void RPCModMenuSection(IGenericModConfigMenuApi api, MenuPresence conf) {
+    private void RPCModMenuSection(IGenericModConfigMenuApi api, MenuPresence conf)
+    {
       var mod = ModManifest;
       api.AddPageLink(mod, "tags", () => "Show available tags");
-      api.AddTextOption(mod,
+      api.AddTextOption(
+        mod,
         name: () => "Line 1 (State)",
         getValue: () => conf.State,
         setValue: value => conf.State = value
       );
-      api.AddTextOption(mod,
+      api.AddTextOption(
+        mod,
         name: () => "Line 2 (Details)",
         getValue: () => conf.Details,
         setValue: value => conf.Details = value
       );
-      api.AddTextOption(mod,
+      api.AddTextOption(
+        mod,
         name: () => "Large Image Text",
         getValue: () => conf.LargeImageText,
         setValue: value => conf.LargeImageText = value
       );
-      api.AddTextOption(mod,
+      api.AddTextOption(
+        mod,
         name: () => "Small Image Text",
         getValue: () => conf.SmallImageText,
         setValue: value => conf.SmallImageText = value
       );
-      api.AddBoolOption(mod,
+      api.AddBoolOption(
+        mod,
         name: () => "Force small image",
-        tooltip: () => "Always show small image, even if small text is empty and weather isn't shown.",
+        tooltip: () =>
+          "Always show small image, even if small text is empty and weather isn't shown.",
         getValue: () => conf.ForceSmallImage,
         setValue: value => conf.ForceSmallImage = value
       );
     }
 
-    private void HandleButton(object sender, ButtonReleasedEventArgs e) {
+    private void HandleButton(object sender, ButtonReleasedEventArgs e)
+    {
       if (e.Button != Config.ReloadConfigButton)
         return;
-      try {
+      try
+      {
         LoadConfig();
         Game1.addHUDMessage(new HUDMessage("DiscordRP config reloaded.", HUDMessage.newQuest_type));
-      } catch (Exception err) {
-        Game1.addHUDMessage(new HUDMessage("Failed to reload DiscordRP config. Check console.", HUDMessage.error_type));
+      }
+      catch (Exception err)
+      {
+        Game1.addHUDMessage(
+          new HUDMessage("Failed to reload DiscordRP config. Check console.", HUDMessage.error_type)
+        );
         Monitor.Log(err.ToString(), LogLevel.Error);
       }
     }
@@ -330,25 +437,30 @@ namespace SVRichPresence {
 
     private Timestamps timestampSession;
     private Timestamps timestampFarm;
+
     private void SetTimestamp(object sender, EventArgs e) => SetTimestamp();
+
     private void SetTimestamp() => timestampFarm = Timestamps.Now;
 
-    private void DoUpdate(object sender, UpdateTickedEventArgs e) {
+    private void DoUpdate(object sender, UpdateTickedEventArgs e)
+    {
       client.Invoke();
       if (e.IsMultipleOf(30))
         client.SetPresence(GetPresence());
     }
 
-    private MenuPresence Conf => !Context.IsWorldReady ?
-        Config.MenuPresence : Config.GamePresence;
+    private MenuPresence Conf => !Context.IsWorldReady ? Config.MenuPresence : Config.GamePresence;
 
-    private RichPresence GetPresence() {
-      var presence = new RichPresence {
+    private RichPresence GetPresence()
+    {
+      var presence = new RichPresence
+      {
         Details = api.FormatText(Conf.Details),
         State = api.FormatText(Conf.State)
       };
       var smallImageText = api.FormatText(Conf.SmallImageText);
-      var assets = new Assets {
+      var assets = new Assets
+      {
         LargeImageKey = "default_large",
         LargeImageText = api.FormatText(Conf.LargeImageText),
         SmallImageText = smallImageText,
@@ -356,7 +468,8 @@ namespace SVRichPresence {
       if (Conf.ForceSmallImage || smallImageText.Length > 0)
         assets.SmallImageKey = "default_small";
 
-      if (Context.IsWorldReady) {
+      if (Context.IsWorldReady)
+      {
         var conf = (GamePresence)Conf;
         if (conf.ShowSeason)
           assets.LargeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}";
@@ -365,30 +478,36 @@ namespace SVRichPresence {
         if (conf.ShowPlayTime)
           presence.Timestamps = timestampFarm;
         if (Context.IsMultiplayer)
-          try {
-            presence.Party = new Party {
+          try
+          {
+            presence.Party = new Party
+            {
               ID = Game1.MasterPlayer.UniqueMultiplayerID.ToString(),
               Size = Game1.numberOfPlayers(),
               Max = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1
             };
-          } catch { }
+          }
+          catch { }
       }
 
       if (Config.ShowGlobalPlayTime)
         presence.Timestamps = timestampSession;
       if (Config.AddGetModButton)
-        presence.Buttons = new Button[] {
-          new() { Label = "Get SDV Rich Presence Mod", Url = "https://ruintd.github.io/SVRichPresence/" }
+        presence.Buttons = new Button[]
+        {
+          new() { Label = "Get SDV Rich Presence Mod", Url = ModURL }
         };
 
       presence.Assets = assets;
       return presence;
     }
 
-    private string FarmTypeKey() {
+    private string FarmTypeKey()
+    {
       if (!Config.GamePresence.ShowFarmType)
         return "default";
-      return Game1.whichFarm switch {
+      return Game1.whichFarm switch
+      {
         Farm.default_layout => "standard",
         Farm.riverlands_layout => "riverland",
         Farm.forest_layout => "forest",
@@ -398,7 +517,8 @@ namespace SVRichPresence {
       };
     }
 
-    private string WeatherKey() {
+    private static string WeatherKey()
+    {
       if (Game1.isRaining)
         return Game1.isLightning ? "stormy" : "rainy";
       if (Game1.isDebrisWeather)
