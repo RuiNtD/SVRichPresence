@@ -1,23 +1,20 @@
-﻿using DiscordRPC;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using DiscordRPC;
 using GenericModConfigMenu;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
-using StardewValley.Buildings;
-using StardewValley.Locations;
-using StardewValley.Tools;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security;
-using static System.Net.Mime.MediaTypeNames;
 using Constants = StardewModdingAPI.Constants;
 using LogLevel = StardewModdingAPI.LogLevel;
 using Utility = StardewValley.Utility;
 
-namespace SVRichPresence {
-  public class RichPresenceMod : Mod {
+namespace SVRichPresence
+{
+  public class RichPresenceMod : Mod
+  {
     private static readonly string clientId = "444517509148966923";
     private static readonly string steamId = "413150";
     private static readonly string ModURL = "https://www.nexusmods.com/stardewvalley/mods/2156";
@@ -26,11 +23,14 @@ namespace SVRichPresence {
     private IRichPresenceAPI api;
     private DiscordRpcClient client;
 
-    public override void Entry(IModHelper helper) {
+    public override void Entry(IModHelper helper)
+    {
       api = new RichPresenceAPI(this);
-      client = new DiscordRpcClient(clientId,
+      client = new DiscordRpcClient(
+        clientId,
         autoEvents: false,
-        logger: new MonitorLogger(Monitor));
+        logger: new MonitorLogger(Monitor)
+      );
       client.SetSubscription(EventType.Join);
       client.RegisterUriScheme(steamId);
       client.OnReady += (sender, e) =>
@@ -38,20 +38,23 @@ namespace SVRichPresence {
       client.Initialize();
 
       #region Console Commands
-      Helper.ConsoleCommands.Add("DiscordReload",
+      Helper.ConsoleCommands.Add(
+        "DiscordReload",
         Helper.Translation.Get("command.discordreload.desc"),
         (string command, string[] args) => {
-          LoadConfig();
+            LoadConfig();
         }
       );
-      Helper.ConsoleCommands.Add("DiscordFormat",
+      Helper.ConsoleCommands.Add(
+        "DiscordFormat",
         Helper.Translation.Get("command.discordformat.desc"),
         (string command, string[] args) => {
           string text = this.api.FormatText(string.Join(" ", args));
           Monitor.Log($"{Helper.Translation.Get("command.discordformat.result")}: {text}", LogLevel.Info);
         }
       );
-      Helper.ConsoleCommands.Add("DiscordTags",
+      Helper.ConsoleCommands.Add(
+        "DiscordTags",
         Helper.Translation.Get("command.discordtags.desc"),
         (string command, string[] args) => {
           bool all = string.Join("", args).ToLower().StartsWith("all");
@@ -71,80 +74,141 @@ namespace SVRichPresence {
       Helper.Events.GameLoop.SaveLoaded += SetTimestamp;
       Helper.Events.GameLoop.ReturnedToTitle += SetTimestamp;
       Helper.Events.GameLoop.SaveLoaded += (object sender, SaveLoadedEventArgs e) =>
-          api.GamePresence = Helper.Translation.Get("gamePresence.gettingStarted");
+        api.GamePresence = Helper.Translation.Get("gamePresence.gettingStarted");
       Helper.Events.GameLoop.SaveCreated += (object sender, SaveCreatedEventArgs e) =>
-          api.GamePresence = Helper.Translation.Get("gamePresence.startingNewGame");
-      Helper.Events.GameLoop.GameLaunched += (object sender, GameLaunchedEventArgs e) => {
+        api.GamePresence = Helper.Translation.Get("gamePresence.startingNewGame");
+      Helper.Events.GameLoop.GameLaunched += (object sender, GameLaunchedEventArgs e) =>
+      {
         SetTimestamp();
         timestampSession = Timestamps.Now;
       };
 
       #region Default Tags
-      var mod = ModManifest;
-      var ReqWorld = api.ReqWorld;
       var None = api.None;
-      var SetTag = api.SetTag;
 
-      SetTag(mod, "Activity", () => api.GamePresence);
-      SetTag(mod, "ModCount", () => Helper.ModRegistry.GetAll().Count().ToString());
-      SetTag(mod, "SMAPIVersion", () => Constants.ApiVersion.ToString());
-      SetTag(mod, "StardewVersion", () => Game1.version);
-      SetTag(mod, "RPCModVersion", () => ModManifest.Version.ToString());
-      SetTag(mod, "Song", () => Utility.getSongTitleFromCueName(Game1.currentSong?.Name ?? None));
+      Tag("Activity", () => api.GamePresence);
+      Tag("ModCount", () => Helper.ModRegistry.GetAll().Count().ToString());
+      Tag("SMAPIVersion", () => Constants.ApiVersion.ToString());
+      Tag("StardewVersion", () => Game1.version);
+      Tag("RPCModVersion", () => ModManifest.Version.ToString());
+      Tag("Song", () => Utility.getSongTitleFromCueName(Game1.currentSong?.Name ?? None));
 
-      SetTag(mod, "Name", ReqWorld(() => Game1.player.Name));
-      SetTag(mod, "Farm", ReqWorld(() => Game1.content.LoadString("Strings\\UI:Inventory_FarmName", api.FormatTag("FarmName"))));
-      SetTag(mod, "FarmName", ReqWorld(() => Game1.player.farmName.ToString()));
-      SetTag(mod, "PetName", ReqWorld(() => Game1.player.hasPet() ? Game1.player.getPetDisplayName() : None));
-      SetTag(mod, "Location", ReqWorld(() => Game1.currentLocation.Name));
-      SetTag(mod, "RomanticInterest", ReqWorld(() => Utility.getTopRomanticInterest(Game1.player)?.getName() ?? None));
-      SetTag(mod, "NonRomanticInterest", ReqWorld(() => Utility.getTopNonRomanticInterest(Game1.player)?.getName() ?? None));
+      WTag("Name", () => Game1.player.Name);
+      WTag(
+        "Farm",
+        () => Game1.content.LoadString("Strings\\UI:Inventory_FarmName", api.FormatTag("FarmName"))
+      );
+      WTag("FarmName", () => Game1.player.farmName.ToString());
+      WTag("PetName", () => Game1.player.hasPet() ? Game1.player.getPetDisplayName() : None);
+      WTag("Location", () => Game1.currentLocation.Name);
+      WTag(
+        "RomanticInterest",
+        () => Utility.getTopRomanticInterest(Game1.player)?.getName() ?? None
+      );
+      WTag(
+        "NonRomanticInterest",
+        () => Utility.getTopNonRomanticInterest(Game1.player)?.getName() ?? None
+      );
 
-      SetTag(mod, "Money", ReqWorld(() => {
-        // Copied from LoadGameMenu.drawSlotMoney
-        string cashText = Game1.content.LoadString("Strings\\StringsFromCSFiles:LoadGameMenu.cs.11020", Utility.getNumberWithCommas(Game1.player.Money));
-        if (Game1.player.Money == 1 && LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.pt)
-          cashText = cashText[..^1];
-        return cashText;
-      }));
-      SetTag(mod, "MoneyCommas", ReqWorld(() => Utility.getNumberWithCommas(Game1.player.Money)));
-      SetTag(mod, "MoneyNumber", ReqWorld(() => Game1.player.Money.ToString()));
-      SetTag(mod, "Level", ReqWorld(() => Game1.content.LoadString("Strings\\UI:Inventory_PortraitHover_Level", Game1.player.Level.ToString())));
-      SetTag(mod, "LevelNumber", ReqWorld(() => Game1.player.Level.ToString()));
-      SetTag(mod, "Title", ReqWorld(() => Game1.player.getTitle().ToString()));
-      SetTag(mod, "TotalTime", ReqWorld(() => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed)));
+      WTag(
+        "Money",
+        () =>
+        {
+          // Copied from LoadGameMenu.drawSlotMoney
+          string cashText = Game1.content.LoadString(
+            "Strings\\StringsFromCSFiles:LoadGameMenu.cs.11020",
+            Utility.getNumberWithCommas(Game1.player.Money)
+          );
+          if (
+            Game1.player.Money == 1
+            && LocalizedContentManager.CurrentLanguageCode
+              == LocalizedContentManager.LanguageCode.pt
+          )
+            cashText = cashText[..^1];
+          return cashText;
+        }
+      );
+      WTag("MoneyCommas", () => Utility.getNumberWithCommas(Game1.player.Money));
+      WTag("MoneyNumber", () => Game1.player.Money.ToString());
+      WTag(
+        "Level",
+        () =>
+          Game1.content.LoadString(
+            "Strings\\UI:Inventory_PortraitHover_Level",
+            api.FormatTag("LevelNumber")
+          )
+      );
+      WTag("LevelNumber", () => Game1.player.Level.ToString());
+      WTag("Title", () => Game1.player.getTitle().ToString());
+      WTag(
+        "TotalTime",
+        () => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed)
+      );
 
-      SetTag(mod, "Health", ReqWorld(() => Game1.player.health.ToString()));
-      SetTag(mod, "HealthMax", ReqWorld(() => Game1.player.maxHealth.ToString()));
-      SetTag(mod, "HealthPercent", ReqWorld(() => Math.Round((double)Game1.player.health / Game1.player.maxHealth * 100, 2).ToString()));
-      SetTag(mod, "Energy", ReqWorld(() => Game1.player.Stamina.ToString()));
-      SetTag(mod, "EnergyMax", ReqWorld(() => Game1.player.MaxStamina.ToString()));
-      SetTag(mod, "EnergyPercent", ReqWorld(() => Math.Round((double)Game1.player.Stamina / Game1.player.MaxStamina * 100, 2).ToString()));
+      WTag("Health", () => Game1.player.health.ToString());
+      WTag("HealthMax", () => Game1.player.maxHealth.ToString());
+      WTag(
+        "HealthPercent",
+        () => Math.Round((double)Game1.player.health / Game1.player.maxHealth * 100, 2).ToString()
+      );
+      WTag("Energy", () => Game1.player.Stamina.ToString());
+      WTag("EnergyMax", () => Game1.player.MaxStamina.ToString());
+      WTag(
+        "EnergyPercent",
+        () => Math.Round((double)Game1.player.Stamina / Game1.player.MaxStamina * 100, 2).ToString()
+      );
 
-      SetTag(mod, "Time", ReqWorld(() => Game1.getTimeOfDayString(Game1.timeOfDay)));
-      SetTag(mod, "Date", ReqWorld(() => Utility.getDateString()));
-      SetTag(mod, "Season", ReqWorld(() => Utility.getSeasonNameFromNumber(SDate.Now().SeasonIndex)));
-      SetTag(mod, "DayOfWeek", ReqWorld(() => Game1.shortDayDisplayNameFromDayOfSeason(SDate.Now().Day)));
+      WTag("Time", () => Game1.getTimeOfDayString(Game1.timeOfDay));
+      WTag("Date", () => Utility.getDateString());
+      WTag("Season", () => Utility.getSeasonNameFromNumber(SDate.Now().SeasonIndex));
+      WTag("DayOfWeek", () => Game1.shortDayDisplayNameFromDayOfSeason(SDate.Now().Day));
 
-      SetTag(mod, "Day", ReqWorld(() => SDate.Now().Day.ToString()));
-      SetTag(mod, "DayPad", ReqWorld(() => $"{SDate.Now().Day:00}"));
-      SetTag(mod, "DaySuffix", ReqWorld(() => Utility.getNumberEnding(SDate.Now().Day)));
-      SetTag(mod, "Year", ReqWorld(() => SDate.Now().Year.ToString()));
-      SetTag(mod, "YearSuffix", ReqWorld(() => Utility.getNumberEnding(SDate.Now().Year)));
+      WTag("Day", () => SDate.Now().Day.ToString());
+      WTag("DayPad", () => $"{SDate.Now().Day:00}");
+      WTag("DaySuffix", () => Utility.getNumberEnding(SDate.Now().Day));
+      WTag("Year", () => SDate.Now().Year.ToString());
+      WTag("YearSuffix", () => Utility.getNumberEnding(SDate.Now().Year));
 
-      SetTag(mod, "GameVerb", ReqWorld(() => Context.IsMultiplayer && Context.IsMainPlayer ? Helper.Translation.Get("hosting") : Helper.Translation.Get("playing")));
-      SetTag(mod, "GameNoun", ReqWorld(() => Context.IsMultiplayer ? Helper.Translation.Get("co-op") : Helper.Translation.Get("solo")));
-      SetTag(mod, "GameInfo", ReqWorld(() => api.FormatTag("GameVerb") + " " + api.FormatTag("GameNoun")));
+      WTag(
+        "GameInfo",
+        () =>
+          Context.IsMultiplayer
+            ? Context.IsMainPlayer
+              ? Helper.Translation.Get("hostingCoop")
+              : Helper.Translation.Get("playingCoop")
+            : Helper.Translation.Get("playingSolo")
+      );
       #endregion
     }
 
-    private string FormatTags(out int count, out int nulls, string format = "{{{0}}}: {1}", bool pad = false, bool all = false) {
+    private void Tag(string tag, Func<string> func) => api.SetTag(this.ModManifest, tag, func);
+
+    private void WTag(string tag, Func<string> func) =>
+      Tag(
+        tag,
+        () =>
+        {
+          if (!Context.IsWorldReady)
+            return null;
+          return func();
+        }
+      );
+
+    private string FormatTags(
+      out int count,
+      out int nulls,
+      string format = "{{{0}}}: {1}",
+      bool pad = false,
+      bool all = false
+    )
+    {
       var tags = api.ResolveAllTags();
       nulls = 0;
       count = 0;
 
       Dictionary<string, Dictionary<string, string>> groups = new();
-      foreach (var tag in tags) {
+      foreach (var tag in tags)
+      {
         string owner = api.GetTagOwner(tag.Key) ?? "";
         owner = Helper.ModRegistry.Get(owner)?.Manifest.Name ?? "";
 
@@ -152,17 +216,21 @@ namespace SVRichPresence {
           groups[owner] = new();
 
         var val = tag.Value.Value;
-        if (!all && val is null) nulls++;
-        else {
+        if (!all && val is null)
+          nulls++;
+        else
+        {
           val ??= "[NULL]";
-          if (!tag.Value.Success) val = "[ERROR]";
+          if (!tag.Value.Success)
+            val = "[ERROR]";
           groups[owner][tag.Key] = val;
           count++;
         }
       }
 
       List<string> output = new(tags.Count + groups.Count);
-      void list(Dictionary<string, string> group) {
+      void list(Dictionary<string, string> group)
+      {
         int longest = 0;
         if (pad)
           foreach (var tag in group)
@@ -170,9 +238,11 @@ namespace SVRichPresence {
         foreach (var tag in group)
           output.Add(String.Format(format, tag.Key.PadLeft(longest), tag.Value));
       }
-      void section(Dictionary<string, string> group, string name) {
+      void section(Dictionary<string, string> group, string name)
+      {
         var count = group.Count;
-        if (count == 0) return;
+        if (count == 0)
+          return;
 
         output.Add("");
         output.Add(Helper.Translation.Get(count > 1 ? "options.tagsFrom" : "options.tagFrom", new { count, name }));
@@ -181,28 +251,32 @@ namespace SVRichPresence {
       }
       list(groups[ModManifest.Name]);
 
-      foreach (var group in groups) {
-        if (group.Key == ModManifest.Name) continue;
-        if (group.Key == "") continue;
+      foreach (var group in groups)
+      {
+        if (group.Key == ModManifest.Name)
+          continue;
+        if (group.Key == "")
+          continue;
         section(group.Value, group.Key);
       }
       section(groups[""], Helper.Translation.Get("options.unknownMods"));
 
       return string.Join("\n", output);
-  }
+    }
 
     public override object GetApi() => api;
 
-    private void RegisterConfigMenu(object sender, GameLaunchedEventArgs e) {
+    private void RegisterConfigMenu(object sender, GameLaunchedEventArgs e)
+    {
       // get Generic Mod Config Menu's API (if it's installed)
-      var configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
-      if (configMenu is null) return;
+      var configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>(
+        "spacechase0.GenericModConfigMenu"
+      );
+      if (configMenu is null)
+        return;
       var mod = ModManifest;
 
-      configMenu.Register(mod,
-        reset: () => Config = new ModConfig(),
-        save: () => SaveConfig()
-      );
+      configMenu.Register(mod, reset: () => Config = new ModConfig(), save: () => SaveConfig());
 
       configMenu.AddBoolOption(mod,
           name: () => Helper.Translation.Get("options.showGlobalPlaytime"),
@@ -271,7 +345,8 @@ namespace SVRichPresence {
       );
     }
 
-    private void RPCModMenuSection(IGenericModConfigMenuApi api, MenuPresence conf) {
+    private void RPCModMenuSection(IGenericModConfigMenuApi api, MenuPresence conf)
+    {
       var mod = ModManifest;
       api.AddPageLink(mod, "tags", () => Helper.Translation.Get("options.showAvailableTags"));
       api.AddTextOption(mod,
@@ -302,10 +377,12 @@ namespace SVRichPresence {
       );
     }
 
-    private void HandleButton(object sender, ButtonReleasedEventArgs e) {
+    private void HandleButton(object sender, ButtonReleasedEventArgs e)
+    {
       if (e.Button != Config.ReloadConfigButton)
         return;
-      try {
+      try
+      {
         LoadConfig();
         Game1.addHUDMessage(new HUDMessage(Helper.Translation.Get("console.reloadConfig"), HUDMessage.newQuest_type));
       } catch (Exception err) {
@@ -320,25 +397,30 @@ namespace SVRichPresence {
 
     private Timestamps timestampSession;
     private Timestamps timestampFarm;
+
     private void SetTimestamp(object sender, EventArgs e) => SetTimestamp();
+
     private void SetTimestamp() => timestampFarm = Timestamps.Now;
 
-    private void DoUpdate(object sender, UpdateTickedEventArgs e) {
+    private void DoUpdate(object sender, UpdateTickedEventArgs e)
+    {
       client.Invoke();
       if (e.IsMultipleOf(30))
         client.SetPresence(GetPresence());
     }
 
-    private MenuPresence Conf => !Context.IsWorldReady ?
-        Config.MenuPresence : Config.GamePresence;
+    private MenuPresence Conf => !Context.IsWorldReady ? Config.MenuPresence : Config.GamePresence;
 
-    private RichPresence GetPresence() {
-      var presence = new RichPresence {
+    private RichPresence GetPresence()
+    {
+      var presence = new RichPresence
+      {
         Details = api.FormatText(Conf.Details),
         State = api.FormatText(Conf.State)
       };
       var smallImageText = api.FormatText(Conf.SmallImageText);
-      var assets = new Assets {
+      var assets = new Assets
+      {
         LargeImageKey = "default_large",
         LargeImageText = api.FormatText(Conf.LargeImageText),
         SmallImageText = smallImageText,
@@ -346,7 +428,8 @@ namespace SVRichPresence {
       if (Conf.ForceSmallImage || smallImageText.Length > 0)
         assets.SmallImageKey = "default_small";
 
-      if (Context.IsWorldReady) {
+      if (Context.IsWorldReady)
+      {
         var conf = (GamePresence)Conf;
         if (conf.ShowSeason)
           assets.LargeImageKey = $"{Game1.currentSeason}_{FarmTypeKey()}";
@@ -355,13 +438,16 @@ namespace SVRichPresence {
         if (conf.ShowPlayTime)
           presence.Timestamps = timestampFarm;
         if (Context.IsMultiplayer)
-          try {
-            presence.Party = new Party {
+          try
+          {
+            presence.Party = new Party
+            {
               ID = Game1.MasterPlayer.UniqueMultiplayerID.ToString(),
               Size = Game1.numberOfPlayers(),
               Max = Game1.getFarm().getNumberBuildingsConstructed("Cabin") + 1
             };
-          } catch { }
+          }
+          catch { }
       }
 
       if (Config.ShowGlobalPlayTime)
@@ -375,10 +461,12 @@ namespace SVRichPresence {
       return presence;
     }
 
-    private string FarmTypeKey() {
+    private string FarmTypeKey()
+    {
       if (!Config.GamePresence.ShowFarmType)
         return "default";
-      return Game1.whichFarm switch {
+      return Game1.whichFarm switch
+      {
         Farm.default_layout => "standard",
         Farm.riverlands_layout => "riverland",
         Farm.forest_layout => "forest",
@@ -388,7 +476,8 @@ namespace SVRichPresence {
       };
     }
 
-    private string WeatherKey() {
+    private static string WeatherKey()
+    {
       if (Game1.isRaining)
         return Game1.isLightning ? "stormy" : "rainy";
       if (Game1.isDebrisWeather)
