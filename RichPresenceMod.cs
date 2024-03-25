@@ -25,6 +25,7 @@ namespace SVRichPresence
 
     public override void Entry(IModHelper helper)
     {
+      I18n.Init(Helper.Translation);
       api = new RichPresenceAPI(this);
       client = new DiscordRpcClient(
         clientId,
@@ -34,34 +35,37 @@ namespace SVRichPresence
       client.SetSubscription(EventType.Join);
       client.RegisterUriScheme(steamId);
       client.OnReady += (sender, e) =>
-        Monitor.Log($"{Helper.Translation.Get("console.connectedToDiscord")}: {e.User}", LogLevel.Info);
+        Monitor.Log(I18n.Console_DiscordConnected(e.User.ToString()), LogLevel.Info);
       client.Initialize();
 
       #region Console Commands
       Helper.ConsoleCommands.Add(
         "DiscordReload",
-        Helper.Translation.Get("command.discordreload.desc"),
-        (string command, string[] args) => {
-            LoadConfig();
+        I18n.Command_Reload_Desc(),
+        (string command, string[] args) =>
+        {
+          LoadConfig();
         }
       );
       Helper.ConsoleCommands.Add(
         "DiscordFormat",
-        Helper.Translation.Get("command.discordformat.desc"),
-        (string command, string[] args) => {
+        I18n.Command_Format_Desc(),
+        (string command, string[] args) =>
+        {
           string text = this.api.FormatText(string.Join(" ", args));
-          Monitor.Log($"{Helper.Translation.Get("command.discordformat.result")}: {text}", LogLevel.Info);
+          Monitor.Log(I18n.Command_Format_Result(text), LogLevel.Info);
         }
       );
       Helper.ConsoleCommands.Add(
         "DiscordTags",
-        Helper.Translation.Get("command.discordtags.desc"),
-        (string command, string[] args) => {
+        I18n.Command_Tags_Desc(),
+        (string command, string[] args) =>
+        {
           bool all = string.Join("", args).ToLower().StartsWith("all");
-          string output = $"{Helper.Translation.Get("command.discordtags.availableTags")}:\n";
-          output += FormatTags(out _, out int nulls, format: "  {{{0}}}: {1}", pad: true, all: all);
+          string output = $"{I18n.TagList_Header()}\n";
+          output += FormatTags(out int nulls, format: "  {{{0}}}: {1}", pad: true, all: all);
           if (nulls > 0)
-            output += $"\n\n{Helper.Translation.Get((nulls > 1 ? "command.discordtags.unavailableTags" : "command.discordtags.unavailableTag"), new {count = nulls})}";
+            output += $"\n\n{I18n.Command_Tags_Nulls(nulls)}";
           Monitor.Log(output, LogLevel.Info);
         }
       );
@@ -74,9 +78,9 @@ namespace SVRichPresence
       Helper.Events.GameLoop.SaveLoaded += SetTimestamp;
       Helper.Events.GameLoop.ReturnedToTitle += SetTimestamp;
       Helper.Events.GameLoop.SaveLoaded += (object sender, SaveLoadedEventArgs e) =>
-        api.GamePresence = Helper.Translation.Get("gamePresence.gettingStarted");
+        api.GamePresence = I18n.GamePresence_GettingStarted();
       Helper.Events.GameLoop.SaveCreated += (object sender, SaveCreatedEventArgs e) =>
-        api.GamePresence = Helper.Translation.Get("gamePresence.startingNewGame");
+        api.GamePresence = I18n.GamePresence_StartingNewGame();
       Helper.Events.GameLoop.GameLaunched += (object sender, GameLaunchedEventArgs e) =>
       {
         SetTimestamp();
@@ -174,9 +178,9 @@ namespace SVRichPresence
         () =>
           Context.IsMultiplayer
             ? Context.IsMainPlayer
-              ? Helper.Translation.Get("hostingCoop")
-              : Helper.Translation.Get("playingCoop")
-            : Helper.Translation.Get("playingSolo")
+              ? I18n.HostingCoop()
+              : I18n.PlayingCoop()
+            : I18n.PlayingSolo()
       );
       #endregion
     }
@@ -195,7 +199,6 @@ namespace SVRichPresence
       );
 
     private string FormatTags(
-      out int count,
       out int nulls,
       string format = "{{{0}}}: {1}",
       bool pad = false,
@@ -204,7 +207,6 @@ namespace SVRichPresence
     {
       var tags = api.ResolveAllTags();
       nulls = 0;
-      count = 0;
 
       Dictionary<string, Dictionary<string, string>> groups = new();
       foreach (var tag in tags)
@@ -224,7 +226,6 @@ namespace SVRichPresence
           if (!tag.Value.Success)
             val = "[ERROR]";
           groups[owner][tag.Key] = val;
-          count++;
         }
       }
 
@@ -245,7 +246,10 @@ namespace SVRichPresence
           return;
 
         output.Add("");
-        output.Add(Helper.Translation.Get(count > 1 ? "options.tagsFrom" : "options.tagFrom", new { count, name }));
+        if (name != "")
+          output.Add(I18n.TagList_ModHeader(count, name));
+        else
+          output.Add(I18n.TagList_UnknownModsHeader(count));
 
         list(group);
       }
@@ -259,7 +263,7 @@ namespace SVRichPresence
           continue;
         section(group.Value, group.Key);
       }
-      section(groups[""], Helper.Translation.Get("options.unknownMods"));
+      section(groups[""], "");
 
       return string.Join("\n", output);
     }
@@ -278,100 +282,117 @@ namespace SVRichPresence
 
       configMenu.Register(mod, reset: () => Config = new ModConfig(), save: () => SaveConfig());
 
-      configMenu.AddBoolOption(mod,
-          name: () => Helper.Translation.Get("options.showGlobalPlaytime"),
-          getValue: () => Config.ShowGlobalPlayTime,
-          setValue: value => Config.ShowGlobalPlayTime = value
+      configMenu.AddBoolOption(
+        mod,
+        name: () => I18n.Options_ShowGlobalPlayTime(),
+        getValue: () => Config.ShowGlobalPlayTime,
+        setValue: value => Config.ShowGlobalPlayTime = value
       );
-      configMenu.AddBoolOption(mod,
-          name: () => Helper.Translation.Get("options.addGetModButton"),
-          tooltip: () => Helper.Translation.Get("options.addGetModButton.desc"),
-          getValue: () => Config.AddGetModButton,
-          setValue: value => Config.AddGetModButton = value
+      configMenu.AddBoolOption(
+        mod,
+        name: () => I18n.Options_AddGetModButton(),
+        tooltip: () => I18n.Options_AddGetModButton_Desc(),
+        getValue: () => Config.AddGetModButton,
+        setValue: value => Config.AddGetModButton = value
       );
 
-      configMenu.AddSectionTitle(mod, () => Helper.Translation.Get("options.preview"));
-      configMenu.AddParagraph(mod, () => {
-        var text = api.FormatText(Conf.State) + "\n";
-        text += api.FormatText(Conf.Details) + "\n";
-        var large = api.FormatText(Conf.LargeImageText);
-        if (large.Length > 0) text += $"{Helper.Translation.Get("options.largeImageText")}: {large}\n";
-        var small = api.FormatText(Conf.SmallImageText);
-        if (small.Length > 0) text += $"{Helper.Translation.Get("options.smallImageText")}: {small}\n";
-        return text;
-      });
+      configMenu.AddSectionTitle(mod, () => I18n.Options_Preview());
+      configMenu.AddParagraph(
+        mod,
+        () =>
+        {
+          var text = $"{api.FormatText(Conf.State)}\n";
+          text += $"{api.FormatText(Conf.Details)}\n";
+          text += $"{api.FormatText(Conf.LargeImageText)}\n";
+          text += $"{api.FormatText(Conf.SmallImageText)}\n";
+          return text;
+        }
+      );
 
-      configMenu.AddSectionTitle(mod, () => Helper.Translation.Get("options.customizePresenceInMenus"));
+      configMenu.AddSectionTitle(mod, () => I18n.Options_MenuPresence());
       RPCModMenuSection(configMenu, Config.MenuPresence);
 
-      configMenu.AddSectionTitle(mod, () => Helper.Translation.Get("options.customizePresenceInGame"));
+      configMenu.AddSectionTitle(mod, () => I18n.Options_GamePresence());
       RPCModMenuSection(configMenu, Config.GamePresence);
-      configMenu.AddBoolOption(mod,
-        name: () => Helper.Translation.Get("options.showSeason"),
-        tooltip: () => Helper.Translation.Get("options.showSeason.desc"),
+      configMenu.AddBoolOption(
+        mod,
+        name: () => I18n.Options_ShowSeason(),
+        tooltip: () => I18n.Options_ShowSeason_Desc(),
         getValue: () => Config.GamePresence.ShowSeason,
         setValue: value => Config.GamePresence.ShowSeason = value
-       );
-      configMenu.AddBoolOption(mod,
-        name: () => Helper.Translation.Get("options.showFarmType"),
-        tooltip: () => Helper.Translation.Get("options.showFarmType.desc"),
+      );
+      configMenu.AddBoolOption(
+        mod,
+        name: () => I18n.Options_ShowFarmType(),
+        tooltip: () => I18n.Options_ShowFarmType_Desc(),
         getValue: () => Config.GamePresence.ShowFarmType,
         setValue: value => Config.GamePresence.ShowFarmType = value
       );
-      configMenu.AddBoolOption(mod,
-        name: () => Helper.Translation.Get("options.showWeather"),
-        tooltip: () => Helper.Translation.Get("options.showWeather.desc"),
+      configMenu.AddBoolOption(
+        mod,
+        name: () => I18n.Options_ShowWeather(),
+        tooltip: () => I18n.Options_ShowWeather_Desc(),
         getValue: () => Config.GamePresence.ShowWeather,
         setValue: value => Config.GamePresence.ShowWeather = value
       );
-      configMenu.AddBoolOption(mod,
-        name: () => Helper.Translation.Get("options.showPlaytime"),
-        tooltip: () => Helper.Translation.Get("options.showPlaytime.desc"),
+      configMenu.AddBoolOption(
+        mod,
+        name: () => I18n.Options_ShowPlayTime(),
+        tooltip: () => I18n.Options_ShowPlayTime_Desc(),
         getValue: () => Config.GamePresence.ShowPlayTime,
         setValue: value => Config.GamePresence.ShowPlayTime = value
       );
 
-      configMenu.AddPage(mod, "tags", () => "Tags");
-      configMenu.AddParagraph(mod, () => {
-        string output = FormatTags(out _, out int nulls, pad: false);
-        output += $"\n\n{Helper.Translation.Get((nulls > 1 ? "options.unavailableTags" : "options.unavailableTag"), new { count = nulls })}";
-        return output;
-      });
-      configMenu.AddPageLink(mod, "alltags", () => Helper.Translation.Get("options.showAllTags"));
-
-      configMenu.AddPage(mod, "alltags", () => Helper.Translation.Get("options.allTags"));
-      configMenu.AddParagraph(mod, () =>
-        FormatTags(out _, out _, format: "{{{0}}}: {1}", pad: false, all: true)
+      // Tags Page
+      configMenu.AddPage(mod, "tags", () => I18n.Options_Page_Tags());
+      configMenu.AddParagraph(
+        mod,
+        () =>
+        {
+          string output = FormatTags(out int nulls, pad: false);
+          output += $"\n\n{I18n.Options_UnavailableTags(nulls)}";
+          return output;
+        }
       );
+      configMenu.AddPageLink(mod, "alltags", () => I18n.Options_ShowAllTags());
+
+      // All Tags Page
+      configMenu.AddPage(mod, "alltags", () => I18n.Options_Page_AllTags());
+      configMenu.AddParagraph(mod, () => FormatTags(out _, "{{{0}}}: {1}", pad: false, all: true));
     }
 
     private void RPCModMenuSection(IGenericModConfigMenuApi api, MenuPresence conf)
     {
       var mod = ModManifest;
-      api.AddPageLink(mod, "tags", () => Helper.Translation.Get("options.showAvailableTags"));
-      api.AddTextOption(mod,
-        name: () => Helper.Translation.Get("options.line1"),
+      api.AddPageLink(mod, "tags", () => I18n.Options_ShowAvailableTags());
+      api.AddTextOption(
+        mod,
+        name: () => I18n.Options_State(),
         getValue: () => conf.State,
         setValue: value => conf.State = value
       );
-      api.AddTextOption(mod,
-        name: () => Helper.Translation.Get("options.line2"),
+      api.AddTextOption(
+        mod,
+        name: () => I18n.Options_Details(),
         getValue: () => conf.Details,
         setValue: value => conf.Details = value
       );
-      api.AddTextOption(mod,
-        name: () => Helper.Translation.Get("options.largeImageText"),
+      api.AddTextOption(
+        mod,
+        name: () => I18n.Options_LargeImageText(),
         getValue: () => conf.LargeImageText,
         setValue: value => conf.LargeImageText = value
       );
-      api.AddTextOption(mod,
-        name: () => Helper.Translation.Get("options.smallImageText"),
+      api.AddTextOption(
+        mod,
+        name: () => I18n.Options_SmallImageText(),
         getValue: () => conf.SmallImageText,
         setValue: value => conf.SmallImageText = value
       );
-      api.AddBoolOption(mod,
-        name: () => Helper.Translation.Get("options.forceSmallImage"),
-        tooltip: () => Helper.Translation.Get("options.forceSmallImage.desc"),
+      api.AddBoolOption(
+        mod,
+        name: () => I18n.Options_ForceSmallImage(),
+        tooltip: () => I18n.Options_ForceSmallImage_Desc(),
         getValue: () => conf.ForceSmallImage,
         setValue: value => conf.ForceSmallImage = value
       );
@@ -384,9 +405,13 @@ namespace SVRichPresence
       try
       {
         LoadConfig();
-        Game1.addHUDMessage(new HUDMessage(Helper.Translation.Get("console.reloadConfig"), HUDMessage.newQuest_type));
-      } catch (Exception err) {
-        Game1.addHUDMessage(new HUDMessage(Helper.Translation.Get("console.reloadConfig.failed"), HUDMessage.error_type));
+        Game1.addHUDMessage(new HUDMessage(I18n.Notify_ReloadConfig(), HUDMessage.newQuest_type));
+      }
+      catch (Exception err)
+      {
+        Game1.addHUDMessage(
+          new HUDMessage(I18n.Notify_ReloadConfig_Failed(), HUDMessage.error_type)
+        );
         Monitor.Log(err.ToString(), LogLevel.Error);
       }
     }
@@ -453,8 +478,9 @@ namespace SVRichPresence
       if (Config.ShowGlobalPlayTime)
         presence.Timestamps = timestampSession;
       if (Config.AddGetModButton)
-        presence.Buttons = new Button[] {
-          new() { Label = Helper.Translation.Get("getModButton"), Url = ModURL }
+        presence.Buttons = new Button[]
+        {
+          new() { Label = I18n.GetModButton(), Url = ModURL }
         };
 
       presence.Assets = assets;
