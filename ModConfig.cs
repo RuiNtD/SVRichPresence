@@ -13,11 +13,11 @@ namespace SVRichPresence
 
   internal class MenuPresence
   {
-    public bool ForceSmallImage = false;
     public string State = "In Menus";
     public string Details = "";
     public string LargeImageText = "{ Activity }";
     public string SmallImageText = "";
+    public bool ForceSmallImage = false;
   }
 
   internal class GamePresence : MenuPresence
