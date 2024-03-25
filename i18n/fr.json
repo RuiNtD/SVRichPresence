@@ -39,9 +39,9 @@
   "options.page.tags": "Tags",
   "options.page.allTags": "Tous les Tags",
 
-  "options.header": "Tags disponibles:",
-  "options.modHeader": "{{count}} tags de {{name}}:",
-  "options.unknownModsHeader": "{{count}} tags de mods inconnus:",
+  "tagList.header": "Tags disponibles:",
+  "tagList.modHeader": "{{count}} tags de {{name}}:",
+  "tagList.unknownModsHeader": "{{count}} tags de mods inconnus:",
 
   // GamePresence
   "gamePresence.gettingStarted": "Vient de commencer",
