@@ -208,7 +208,7 @@ namespace SVRichPresence
       var tags = api.ResolveAllTags();
       nulls = 0;
 
-      Dictionary<string, Dictionary<string, string>> groups = new();
+      Dictionary<string, Dictionary<string, string>> groups = new() { [""] = new() };
       foreach (var tag in tags)
       {
         string owner = api.GetTagOwner(tag.Key) ?? "";
