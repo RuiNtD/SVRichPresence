@@ -88,14 +88,12 @@ namespace SVRichPresence
       };
 
       #region Default Tags
-      var None = api.None;
-
       Tag("Activity", () => api.GamePresence);
       Tag("ModCount", () => Helper.ModRegistry.GetAll().Count().ToString());
       Tag("SMAPIVersion", () => Constants.ApiVersion.ToString());
       Tag("StardewVersion", () => Game1.version);
       Tag("RPCModVersion", () => ModManifest.Version.ToString());
-      Tag("Song", () => Utility.getSongTitleFromCueName(Game1.currentSong?.Name ?? None));
+      Tag("Song", () => Utility.getSongTitleFromCueName(Game1.currentSong?.Name ?? api.None));
 
       WTag("Name", () => Game1.player.Name);
       WTag(
@@ -103,15 +101,15 @@ namespace SVRichPresence
         () => Game1.content.LoadString("Strings\\UI:Inventory_FarmName", api.FormatTag("FarmName"))
       );
       WTag("FarmName", () => Game1.player.farmName.ToString());
-      WTag("PetName", () => Game1.player.hasPet() ? Game1.player.getPetDisplayName() : None);
+      WTag("PetName", () => Game1.player.hasPet() ? Game1.player.getPetDisplayName() : api.None);
       WTag("Location", () => Game1.currentLocation.Name);
       WTag(
         "RomanticInterest",
-        () => Utility.getTopRomanticInterest(Game1.player)?.getName() ?? None
+        () => Utility.getTopRomanticInterest(Game1.player)?.getName() ?? api.None
       );
       WTag(
         "NonRomanticInterest",
-        () => Utility.getTopNonRomanticInterest(Game1.player)?.getName() ?? None
+        () => Utility.getTopNonRomanticInterest(Game1.player)?.getName() ?? api.None
       );
 
       WTag(
