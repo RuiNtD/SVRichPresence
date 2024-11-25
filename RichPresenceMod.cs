@@ -146,6 +146,10 @@ namespace SVRichPresence
         "TotalTime",
         () => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed)
       );
+      WTag(
+        "TotalTimeFormat",
+        () => Utility.getHoursMinutesStringFromMilliseconds(Game1.player.millisecondsPlayed).Replace(":", "h"))
+      );
 
       WTag("Health", () => Game1.player.health.ToString());
       WTag("HealthMax", () => Game1.player.maxHealth.ToString());
