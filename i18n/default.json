@@ -7,6 +7,7 @@
   "command.tags.nulls": "{{count}} tags are unavailable; type `discordtags all` to show all",
 
   // Console Output
+  "console.schemeFailed": "Failed to register URI scheme.",
   "console.discordConnected": "Connected to Discord: {{user}}",
   "notify.reloadConfig": "DiscordRP config reloaded.",
   "notify.reloadConfig.failed": "Failed to reload Discord RPC config. Check console.",

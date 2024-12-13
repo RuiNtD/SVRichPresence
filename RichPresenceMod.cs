@@ -32,11 +32,19 @@ namespace SVRichPresence
         autoEvents: false,
         logger: new MonitorLogger(Monitor)
       );
-      client.SetSubscription(EventType.Join);
-      client.RegisterUriScheme(steamId);
       client.OnReady += (sender, e) =>
         Monitor.Log(I18n.Console_DiscordConnected(e.User.ToString()), LogLevel.Info);
       client.Initialize();
+
+      try
+      {
+        client.RegisterUriScheme(steamId);
+        client.SetSubscription(EventType.Join);
+      }
+      catch
+      {
+        Monitor.Log(I18n.Console_SchemeFailed(), LogLevel.Warn);
+      }
 
       #region Console Commands
       Helper.ConsoleCommands.Add(
