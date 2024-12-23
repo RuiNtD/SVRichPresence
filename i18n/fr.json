@@ -7,6 +7,7 @@
   "command.tags.nulls": "{{count}} tags indisponibles; Faites `discordtags all` pour tout afficher",
 
   // Console Output
+  "console.schemeFailed": "N’a pas réussi à enregistrer le schéma URI.",
   "console.discordConnected": "Connecté à Discord: {{user}}",
   "notify.reloadConfig": "DiscordRP configuration rechargée.",
   "notify.reloadConfig.failed": "Échec du rechargement de la configuration de Discord RP. Consultez la console.",
@@ -20,7 +21,7 @@
   "options.GamePresence": "Personnaliser l'Activité dans le jeu",
   "options.State": "Ligne 1 (État)",
   "options.Details": "Ligne 2 (Détails)",
-  "options.LargeImageText": "Texte de la grande image",
+  "options.largeImageText": "Texte de la grande image",
   "options.SmallImageText": "Texte de la petite image",
   "options.ForceSmallImage": "Forcer la petite image",
   "options.ForceSmallImage.desc": "Toujours forcer la petite image, même si le texte est vide et que la météo ne s'affiche pas.",
